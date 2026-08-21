@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Telugu Songs Lyrics Notebook — offline, mobile-friendly lyrics app with song management">
+<title>నా పాటల పుస్తకం — Telugu Songs Lyrics Notebook</title>
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --paper: #fdfbf7;
+  --paper-alt: #f8f5ed;
+  --paper-line: #d8e2e8;
+  --margin-line: #e2a0a0;
+  --ink: #1f2530;
+  --ink-soft: #5a6470;
+  --desk: #2b3a42;
+  --note: #fff8b8;
+  --note-edge: #e9dd86;
+  --accent: #1a5276;
+  --accent-2: #b03a2e;
+  --chip: #f1ece0;
+  --shadow: rgba(0,0,0,0.28);
+  --focus-ring: #f0a500;
+  --danger: #c0392b;
+  --danger-soft: #fdf0ef;
+  --success: #27ae60;
+  --lyrics-size: 17px;
+  --te-font: 'Noto Sans Telugu','Nirmala UI','Gautami','Mallanna','Telugu Sangam MN','Noto Serif Telugu','Latha',sans-serif;
+  --ui-font: system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --radius: 12px;
+  --transition-fast: 0.18s ease;
+  --transition-normal: 0.25s ease;
+}
+html[data-theme="dark"] {
+  --paper: #1d2228; --paper-alt: #22282f; --paper-line: #2b333b;
+  --margin-line: #6e3f3f; --ink: #e9e6df; --ink-soft: #a7b0ba;
+  --desk: #12161a; --note: #2c3138; --note-edge: #3c434c;
+  --accent: #8ec5ee; --accent-2: #f0a08f; --chip: #272d34;
+  --shadow: rgba(0,0,0,0.55); --focus-ring: #f0c040;
+  --danger: #e74c3c; --danger-soft: #3a2020; --success: #2ecc71;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{max-width:100%;overflow-x:hidden}
+html{scroll-behavior:smooth}
+body{background:var(--desk);font-family:var(--te-font);color:var(--ink);padding:14px 14px calc(14px + env(safe-area-inset-bottom));-webkit-text-size-adjust:100%;line-height:1.5}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px;border-radius:6px}
+body.locked{overflow:hidden}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.wrap{max-width:1000px;margin:0 auto}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.app-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px 14px;margin-bottom:12px;color:#f4f1e8}
+html[data-theme="dark"] .app-header{color:#e9e6df}
+.brand{min-width:0}
+.brand h1{font-size:clamp(16px,4.2vw,22px);line-height:1.35;font-weight:700}
+.brand p{font-size:clamp(10px,2.4vw,12px);color:#c7d1d8;letter-spacing:.04em;text-transform:uppercase;margin-top:2px;font-family:var(--ui-font)}
+.badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.badge{font-size:10px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.15);padding:2px 7px;border-radius:999px;color:#e0e7ec;font-family:var(--ui-font);white-space:nowrap}
+.header-actions{display:flex;gap:8px;flex-shrink:0;align-items:center;flex-wrap:wrap}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{min-height:42px;min-width:42px;padding:8px 12px;border-radius:10px;cursor:pointer;border:1px solid var(--note-edge);background:var(--note);color:#2b2b2b;font-size:13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 6px var(--shadow);transition:transform var(--transition-fast),filter var(--transition-fast);font-family:var(--ui-font);white-space:nowrap}
+html[data-theme="dark"] .btn{color:var(--ink)}
+.btn:hover{filter:brightness(1.05)}.btn:active{transform:translateY(1px)}
+.btn.ghost{background:var(--chip);border-color:transparent;color:var(--ink);box-shadow:none}
+.btn.ghost:hover{background:color-mix(in srgb,var(--chip) 85%,var(--accent))}
+.btn.icon{padding:8px 10px;font-size:16px}
+.btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn.danger:hover{filter:brightness(1.1)}
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--paper);border-radius:var(--radius) var(--radius) 0 0;padding:10px 12px;border-bottom:1px solid color-mix(in srgb,var(--ink) 8%,transparent)}
+.toolbar .spacer{flex:1 1 auto;min-width:0}
+.fontsize{display:inline-flex;gap:3px;align-items:center;background:var(--chip);border-radius:10px;padding:3px}
+.fontsize .btn{box-shadow:none;background:transparent;border:none;min-width:36px;min-height:36px;font-weight:700;font-size:13px}
+.fontsize .btn:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+
+/* ============================================================
+   NOTEBOOK PAGE
+   ============================================================ */
+.notebook{background:var(--paper);background-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.008) 50%,transparent 100%),radial-gradient(ellipse at 20% 50%,rgba(255,248,230,.3) 0%,transparent 70%);border-radius:0 0 8px 8px;box-shadow:4px 8px 24px var(--shadow),0 1px 0 rgba(0,0,0,.06);position:relative;padding:24px clamp(14px,4vw,36px) 40px clamp(32px,7vw,60px);min-height:60vh;overflow:hidden}
+html[data-theme="dark"] .notebook{background-image:none}
+.notebook::before{content:'';position:absolute;top:0;bottom:0;left:clamp(22px,5.5vw,46px);width:2px;background:linear-gradient(180deg,var(--margin-line),color-mix(in srgb,var(--margin-line) 60%,transparent));opacity:.7;z-index:1}
+.notebook::after{content:'';position:absolute;top:0;left:0;bottom:0;width:clamp(18px,4vw,28px);background:repeating-linear-gradient(180deg,transparent 0px,transparent 28px,color-mix(in srgb,var(--desk) 40%,transparent) 28px,color-mix(in srgb,var(--desk) 40%,transparent) 36px,transparent 36px,transparent 64px);border-radius:0 0 0 8px;opacity:.15}
+.song-header{border-bottom:2px dashed color-mix(in srgb,var(--ink-soft) 35%,transparent);padding-bottom:14px;margin-bottom:16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;position:relative;z-index:2}
+.song-title{font-size:clamp(20px,5vw,32px);line-height:1.3;font-weight:700;overflow-wrap:anywhere;word-break:break-word}
+.song-meta{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px 8px}
+.meta-item{font-size:clamp(11px,2.8vw,13px);background:var(--chip);color:var(--ink-soft);padding:4px 10px;border-radius:999px;overflow-wrap:anywhere;max-width:100%;font-family:var(--te-font);border:1px solid color-mix(in srgb,var(--ink) 6%,transparent)}
+.meta-item b{color:var(--ink);font-weight:600}
+.lyrics{font-size:var(--lyrics-size);line-height:2;white-space:pre-line;overflow-wrap:break-word;word-break:break-word;position:relative;z-index:2;background-image:linear-gradient(color-mix(in srgb,var(--paper-line) 70%,transparent) 1px,transparent 1px);background-size:100% calc(var(--lyrics-size)*2);background-position:0 calc(var(--lyrics-size)*2 - 1px);padding-bottom:8px;letter-spacing:.01em}
+.empty-note{color:var(--ink-soft);font-size:15px;font-style:italic}
+
+/* ============================================================
+   SONG INDEX
+   ============================================================ */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity var(--transition-normal);z-index:900;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.backdrop.show{opacity:1;pointer-events:auto}
+.index-panel{position:fixed;top:16px;right:16px;width:min(380px,calc(100vw - 32px));max-height:min(82vh,780px);z-index:1000;display:flex;flex-direction:column;background:var(--note);border:1px solid var(--note-edge);border-radius:var(--radius);box-shadow:0 16px 40px var(--shadow),0 4px 12px rgba(0,0,0,.12);transform:translateY(-14px) scale(.97);opacity:0;pointer-events:none;transition:transform var(--transition-normal),opacity var(--transition-normal)}
+.index-panel.open{transform:none;opacity:1;pointer-events:auto}
+.index-panel::before{content:'';position:absolute;top:-1px;right:16px;width:28px;height:28px;background:linear-gradient(135deg,transparent 50%,color-mix(in srgb,var(--note-edge) 90%,#000) 50%);border-radius:0 0 0 4px;z-index:1;opacity:.3}
+.index-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:14px 14px 8px;border-bottom:1px dashed color-mix(in srgb,var(--note-edge) 80%,#000)}
+.index-head h2{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#3a3a2a;font-family:var(--ui-font);font-weight:700}
+html[data-theme="dark"] .index-head h2{color:var(--ink)}
+.index-controls{padding:8px 14px 6px;display:grid;gap:8px}
+.search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.search-row input{width:100%;min-height:42px;padding:8px 12px;border-radius:10px;font-size:14px;border:1px solid var(--note-edge);background:var(--paper);color:var(--ink);font-family:var(--te-font);transition:border-color var(--transition-fast)}
+.search-row input:focus{border-color:var(--accent)}
+.search-row input::placeholder{color:var(--ink-soft);opacity:.6;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:12px;padding:5px 10px;min-height:32px;border-radius:999px;cursor:pointer;border:1px solid var(--note-edge);background:var(--paper);color:var(--ink);font-family:var(--ui-font);font-weight:500;transition:background var(--transition-fast),color var(--transition-fast);display:inline-flex;align-items:center;gap:3px}
+.chip:hover{background:color-mix(in srgb,var(--accent) 10%,var(--paper))}
+.chip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.category-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px;align-items:center}
+.category-row label{font-size:12px;color:var(--ink-soft);font-family:var(--ui-font);font-weight:600;white-space:nowrap}
+.category-row select{min-height:36px;padding:4px 8px;border-radius:8px;font-size:13px;border:1px solid var(--note-edge);background:var(--paper);color:var(--ink);font-family:var(--te-font);cursor:pointer;max-width:100%}
+.index-list{list-style:none;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 14px;margin:0;flex:1 1 auto;scrollbar-width:thin;scrollbar-color:var(--note-edge) transparent}
+.index-list::-webkit-scrollbar{width:6px}
+.index-list::-webkit-scrollbar-thumb{background:var(--note-edge);border-radius:3px}
+.index-list li{border-bottom:1px dashed color-mix(in srgb,var(--ink) 12%,transparent)}
+.index-list li:last-child{border-bottom:none}
+.song-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.song-btn{display:block;width:100%;min-height:46px;padding:10px 6px;background:none;border:none;cursor:pointer;text-align:left;color:var(--accent);font-size:14px;font-weight:600;font-family:var(--te-font);border-radius:8px;transition:background var(--transition-fast)}
+.song-btn:hover{color:var(--accent-2);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.song-btn .song-btn-title{display:block;line-height:1.3}
+.song-btn .sub{display:block;font-size:11.5px;color:var(--ink-soft);font-weight:400;margin-top:2px;overflow-wrap:anywhere;line-height:1.3}
+.song-btn[aria-current="true"]{color:var(--ink);background:color-mix(in srgb,var(--accent) 14%,transparent);font-weight:700}
+.fav-btn{border:none;background:none;cursor:pointer;font-size:18px;min-width:42px;min-height:42px;line-height:1;color:#c9a227;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background var(--transition-fast)}
+.fav-btn:hover{background:rgba(201,162,39,.1)}
+.no-results{padding:20px 4px;color:var(--ink-soft);font-size:14px;text-align:center;line-height:1.5}
+
+/* ============================================================
+   TOAST (with action button support)
+   ============================================================ */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(12px);background:#222;color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;z-index:4000;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;font-family:var(--ui-font);box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:calc(100vw - 40px);text-align:center;display:flex;align-items:center;gap:10px}
+html[data-theme="dark"] .toast{background:#444}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast-action{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 14px;border-radius:999px;cursor:pointer;font-weight:700;font-size:12px;font-family:var(--ui-font);white-space:nowrap;transition:background .15s ease}
+.toast-action:hover{background:rgba(255,255,255,.35)}
+
+/* ============================================================
+   MANAGEMENT OVERLAY
+   ============================================================ */
+.mgmt-overlay{position:fixed;inset:0;z-index:2000;background:var(--paper);display:flex;flex-direction:column;overflow:hidden}
+.mgmt-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:2px solid color-mix(in srgb,var(--ink) 10%,transparent);background:var(--paper-alt);flex-shrink:0}
+.mgmt-header h2{flex:1;font-size:clamp(16px,4vw,20px);font-family:var(--ui-font);font-weight:700;color:var(--ink)}
+.mgmt-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.mgmt-body::-webkit-scrollbar{width:6px}
+.mgmt-body::-webkit-scrollbar-thumb{background:var(--note-edge);border-radius:3px}
+
+/* Management toolbar */
+.mgmt-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center}
+.mgmt-toolbar .mgmt-search{flex:1 1 200px;min-height:42px;padding:8px 14px;border-radius:10px;font-size:14px;border:1px solid color-mix(in srgb,var(--ink) 15%,transparent);background:var(--paper);color:var(--ink);font-family:var(--te-font)}
+.mgmt-toolbar .mgmt-search:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.mgmt-actions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mgmt-bulk-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:10px;margin-bottom:12px;font-family:var(--ui-font);font-size:13px;font-weight:600}
+.mgmt-bulk-bar .count{color:var(--accent)}
+
+/* Song cards in management */
+.mgmt-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border:1px solid color-mix(in srgb,var(--ink) 10%,transparent);border-radius:10px;margin-bottom:8px;background:var(--paper);transition:border-color var(--transition-fast)}
+.mgmt-card:hover{border-color:var(--accent)}
+.mgmt-card input[type="checkbox"]{width:20px;height:20px;cursor:pointer;accent-color:var(--accent)}
+.mgmt-card-info{min-width:0}
+.mgmt-card-title{font-size:15px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.mgmt-card-meta{font-size:12px;color:var(--ink-soft);margin-top:3px;overflow-wrap:anywhere;font-family:var(--ui-font)}
+.mgmt-card-badge{font-size:10px;display:inline-block;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);font-family:var(--ui-font);font-weight:600;margin-top:4px}
+.mgmt-card-actions{display:flex;gap:4px}
+
+/* Management form */
+.mgmt-form{max-width:700px}
+.mgmt-form h3{font-size:clamp(16px,4vw,22px);font-family:var(--ui-font);margin-bottom:20px;color:var(--ink)}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px;font-family:var(--ui-font)}
+.form-group .req{color:var(--danger);font-weight:700}
+.form-group input[type="text"],.form-group textarea,.form-group select{width:100%;padding:10px 14px;border-radius:10px;font-size:15px;border:1px solid color-mix(in srgb,var(--ink) 15%,transparent);background:var(--paper);color:var(--ink);font-family:var(--te-font);transition:border-color var(--transition-fast)}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.form-group textarea{min-height:200px;resize:vertical;line-height:1.8;white-space:pre-wrap}
+.form-group .field-hint{font-size:11px;color:var(--ink-soft);margin-top:4px;font-family:var(--ui-font)}
+.field-error{font-size:12px;color:var(--danger);margin-top:4px;font-family:var(--ui-font);font-weight:600}
+.field-error:empty{display:none}
+.form-group.has-error input,.form-group.has-error textarea{border-color:var(--danger)}
+.mgmt-form-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--ink) 10%,transparent)}
+.mgmt-form-actions .spacer{flex:1}
+
+/* Preview */
+.mgmt-preview-box{border:2px solid color-mix(in srgb,var(--ink) 15%,transparent);border-radius:12px;overflow:hidden;margin-bottom:20px;max-width:700px}
+.mgmt-preview-box .notebook{border-radius:0;box-shadow:none;min-height:auto}
+.mgmt-preview-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Empty state */
+.mgmt-empty{text-align:center;padding:40px 20px;color:var(--ink-soft)}
+.mgmt-empty .emoji{font-size:48px;margin-bottom:12px}
+.mgmt-empty p{font-size:15px;margin-bottom:16px;line-height:1.5;font-family:var(--ui-font)}
+
+/* ============================================================
+   DIALOGS
+   ============================================================ */
+/* Critical startup fix: dialogs/panels marked hidden must stay hidden. */
+[hidden]{display:none!important}
+.dialog-overlay{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:20px;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.dialog-box{background:var(--paper);border-radius:16px;padding:24px;max-width:440px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto}
+.dialog-box h3{font-size:18px;font-family:var(--ui-font);margin-bottom:12px;color:var(--ink)}
+.dialog-box p{font-size:14px;color:var(--ink-soft);line-height:1.5;margin-bottom:8px;font-family:var(--ui-font)}
+.dialog-box .song-name{font-weight:700;color:var(--ink);font-style:italic}
+.dialog-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;justify-content:flex-end}
+.dialog-import-summary{background:var(--chip);border-radius:10px;padding:14px;margin:12px 0;font-family:var(--ui-font);font-size:14px}
+.dialog-import-summary dt{font-weight:600;color:var(--ink)}
+.dialog-import-summary dd{color:var(--ink-soft);margin:0 0 6px 0}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:860px){.app-header{grid-template-columns:1fr}}
+@media(max-width:700px){
+  body{padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+  .index-panel{top:auto;right:0;left:0;bottom:0;width:100%;max-height:88vh;border-radius:18px 18px 0 0;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1),opacity .2s ease}
+  .index-panel::before{display:none}
+  .index-panel.open{transform:translateY(0)}
+  .index-head::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;background:color-mix(in srgb,var(--ink) 20%,transparent);border-radius:2px}
+  .index-head{padding-top:20px;position:relative}
+  .song-header{grid-template-columns:1fr}
+  #btn-fav{justify-self:start}
+  .notebook{padding:18px 14px 30px 32px;border-radius:0 0 6px 6px}
+  .notebook::after{display:none}
+}
+@media(max-width:480px){
+  .toolbar{gap:6px;padding:8px 10px}
+  .btn{padding:7px 10px;font-size:12px;min-height:40px;min-width:40px}
+  .fontsize .btn{min-width:34px;min-height:34px}
+  .brand h1{font-size:clamp(15px,4vw,20px)}
+  .mgmt-card{grid-template-columns:auto minmax(0,1fr);gap:8px;padding:10px}
+  .mgmt-card-actions{grid-column:1/-1;justify-content:flex-end}
+}
+@media(max-width:360px){
+  body{padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  .btn{padding:6px 8px;font-size:11px}.badges{display:none}
+  .toolbar .btn-label{display:none}
+  .notebook{padding:14px 10px 24px 26px}.notebook::before{left:18px}
+}
+@media(max-height:480px) and (orientation:landscape){
+  .index-panel{max-height:94vh}.app-header{padding:6px 10px}.badges{display:none}body{padding:8px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+@media print{
+  body{background:#fff;padding:0;color:#000}
+  .app-header,.toolbar,.index-panel,.backdrop,.toast,#index-toggle,#btn-fav,#theme-toggle,.mgmt-overlay,.dialog-overlay{display:none!important}
+  .notebook{box-shadow:none;border-radius:0;padding:10px 0;background:#fff;min-height:0}
+  .notebook::before,.notebook::after{display:none}
+  .song-header{grid-template-columns:1fr}
+  .lyrics{background-image:none;font-size:12pt;line-height:1.7;color:#000}
+  .meta-item{background:none;border:none;padding:2px 10px 2px 0;color:#333;font-size:10pt}
+  .meta-item b{color:#000}.song-title{font-size:16pt;color:#000}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-header" role="banner">
+    <div class="brand">
+      <h1>🎵 నా పాటల పుస్తకం</h1>
+      <p>Telugu Songs Lyrics Notebook</p>
+      <div class="badges">
+        <span class="badge" id="song-count-badge">Songs</span>
+        <span class="badge">Offline</span>
+        <span class="badge">Mobile Friendly</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="mgmt-open-btn" type="button" title="Manage Songs">⚙ <span class="btn-label">Manage</span></button>
+      <button class="btn" id="index-toggle" type="button" aria-expanded="false" aria-controls="song-index-panel">☰ <span class="btn-label">Songs</span></button>
+      <button class="btn icon" id="theme-toggle" type="button" aria-label="Toggle dark reading mode" title="Toggle dark reading mode">🌙</button>
+    </div>
+  </header>
+  <div class="toolbar" role="toolbar" aria-label="Song tools">
+    <button class="btn ghost" id="btn-random" type="button" title="Pick a random song">🔀 <span class="btn-label">Random</span></button>
+    <button class="btn ghost" id="btn-copy" type="button" title="Copy lyrics to clipboard">📋 <span class="btn-label">Copy</span></button>
+    <button class="btn ghost" id="btn-share" type="button" title="Share this song">🔗 <span class="btn-label">Share</span></button>
+    <button class="btn ghost" id="btn-print" type="button" title="Print current song">🖨️ <span class="btn-label">Print</span></button>
+    <span class="spacer"></span>
+    <div class="fontsize" role="group" aria-label="Lyrics font size">
+      <button class="btn" id="font-dec" type="button" aria-label="Decrease lyrics font size">A−</button>
+      <button class="btn" id="font-reset" type="button" aria-label="Reset lyrics font size">Reset</button>
+      <button class="btn" id="font-inc" type="button" aria-label="Increase lyrics font size">A+</button>
+    </div>
+  </div>
+  <main class="notebook" id="notebook-main">
+    <div class="song-header">
+      <div>
+        <h2 class="song-title" id="display-title">పాటల పుస్తకం</h2>
+        <div class="song-meta" id="display-meta"></div>
+      </div>
+      <button class="btn" id="btn-fav" type="button" aria-pressed="false" aria-label="Add current song to favorites">☆ Favorite</button>
+    </div>
+    <div class="lyrics" id="display-lyrics" aria-live="polite">
+      <span class="empty-note">Open the Song Index to choose a song.</span>
+    </div>
+  </main>
+</div>
+
+<div class="backdrop" id="index-backdrop" hidden></div>
+<aside class="index-panel" id="song-index-panel" aria-hidden="true" aria-label="Song index" role="dialog" aria-modal="true">
+  <div class="index-head">
+    <h2>Song Index</h2>
+    <button class="btn icon" id="index-close" type="button" aria-label="Close song index">✕</button>
+  </div>
+  <div class="index-controls">
+    <div class="search-row">
+      <input type="search" id="search-input" placeholder="Search title, movie, singer…" aria-label="Search songs" autocomplete="off">
+      <button class="btn" id="search-clear" type="button" aria-label="Clear search">✕</button>
+    </div>
+    <div class="chips" role="group" aria-label="Filter songs">
+      <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+      <button class="chip" type="button" data-filter="fav" aria-pressed="false">★ Favs</button>
+      <button class="chip" type="button" data-filter="recent" aria-pressed="false">🕘 Recent</button>
+      <button class="chip" type="button" id="sort-toggle" aria-pressed="false">A–Z</button>
+    </div>
+    <div class="category-row" id="category-row">
+      <label for="category-select">Filter:</label>
+      <select id="category-select" aria-label="Filter by category"><option value="">All Categories</option></select>
+    </div>
+  </div>
+  <ul class="index-list" id="song-index-list" role="listbox" aria-label="Songs"></ul>
+</aside>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toast-msg"></span>
+  <button class="toast-action" id="toast-action" type="button" hidden></button>
+</div>
+
+<!-- ============================================================
+     MANAGEMENT OVERLAY
+     ============================================================ -->
+<div class="mgmt-overlay" id="mgmt-overlay" hidden>
+  <div class="mgmt-header">
+    <h2>⚙ Manage Songs</h2>
+    <button class="btn icon" id="mgmt-close" type="button" aria-label="Close song manager">✕</button>
+  </div>
+  <div class="mgmt-body" id="mgmt-body">
+
+    <!-- LIST VIEW -->
+    <div id="mgmt-view-list">
+      <div class="mgmt-toolbar">
+        <input type="search" class="mgmt-search" id="mgmt-search" placeholder="Search songs to manage…" aria-label="Search songs to manage" autocomplete="off">
+      </div>
+      <div class="mgmt-actions">
+        <button class="btn primary" id="mgmt-add-btn" type="button">+ Add Song</button>
+        <button class="btn ghost" id="mgmt-export-btn" type="button">📥 Export</button>
+        <button class="btn ghost" id="mgmt-import-btn" type="button">📤 Import</button>
+        <button class="btn ghost" id="mgmt-restore-btn" type="button">🔄 Restore Defaults</button>
+      </div>
+      <div class="mgmt-bulk-bar" id="mgmt-bulk-bar" hidden>
+        <span class="count" id="mgmt-selected-count">0 selected</span>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn danger" id="mgmt-bulk-delete" type="button" style="min-height:36px;font-size:12px">Delete Selected</button>
+      </div>
+      <div id="mgmt-list"></div>
+      <div class="mgmt-empty" id="mgmt-empty" hidden>
+        <div class="emoji">🎵</div>
+        <p>No songs available.<br>Add your first song to begin.</p>
+        <button class="btn primary" id="mgmt-empty-add" type="button">+ Add Song</button>
+      </div>
+      <div class="mgmt-empty" id="mgmt-no-results" hidden>
+        <div class="emoji">🔍</div>
+        <p>No songs found.<br>Try a different title, movie, singer, or keyword.</p>
+      </div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div id="mgmt-view-form" hidden>
+      <div class="mgmt-form">
+        <h3 id="mgmt-form-title">Add New Song</h3>
+        <div class="form-group" id="fg-title">
+          <label for="mgmt-f-title">Song Title <span class="req">*</span></label>
+          <input type="text" id="mgmt-f-title" placeholder="Enter song title">
+          <p class="field-error" id="err-title"></p>
+        </div>
+        <div class="form-group">
+          <label for="mgmt-f-movie">Movie</label>
+          <input type="text" id="mgmt-f-movie" placeholder="Movie name">
+        </div>
+        <div class="form-group">
+          <label for="mgmt-f-music">Music Director</label>
+          <input type="text" id="mgmt-f-music" placeholder="Music director name">
+        </div>
+        <div class="form-group">
+          <label for="mgmt-f-lyricist">Lyricist</label>
+          <input type="text" id="mgmt-f-lyricist" placeholder="Lyricist name">
+        </div>
+        <div class="form-group">
+          <label for="mgmt-f-singers">Singers</label>
+          <input type="text" id="mgmt-f-singers" placeholder="Singer names (comma separated)">
+        </div>
+        <div class="form-group">
+          <label for="mgmt-f-extra-label">Additional Info Label</label>
+          <input type="text" id="mgmt-f-extra-label" placeholder="e.g. Cast, Year">
+          <p class="field-hint">Optional. Label for additional info.</p>
+        </div>
+        <div class="form-group">
+          <label for="mgmt-f-extra-value">Additional Info Value</label>
+          <input type="text" id="mgmt-f-extra-value" placeholder="e.g. Actor names, release year">
+        </div>
+        <div class="form-group" id="fg-lyrics">
+          <label for="mgmt-f-lyrics">Lyrics <span class="req">*</span></label>
+          <textarea id="mgmt-f-lyrics" rows="14" placeholder="Paste or type song lyrics here…&#10;&#10;Leave blank lines between verses."></textarea>
+          <p class="field-error" id="err-lyrics"></p>
+          <p class="field-hint">Telugu text and line breaks will be preserved exactly.</p>
+        </div>
+        <div class="mgmt-form-actions">
+          <button class="btn" id="mgmt-cancel-btn" type="button">Cancel</button>
+          <span class="spacer" style="flex:1"></span>
+          <button class="btn ghost" id="mgmt-preview-btn" type="button">👁 Preview</button>
+          <button class="btn primary" id="mgmt-save-btn" type="button">Save Song</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW VIEW -->
+    <div id="mgmt-view-preview" hidden>
+      <h3 style="font-family:var(--ui-font);margin-bottom:16px;color:var(--ink)">Song Preview</h3>
+      <div class="mgmt-preview-box">
+        <div class="notebook" style="min-height:auto">
+          <div class="song-header" style="position:relative;z-index:2">
+            <div>
+              <h2 class="song-title" id="preview-title"></h2>
+              <div class="song-meta" id="preview-meta"></div>
+            </div>
+          </div>
+          <div class="lyrics" id="preview-lyrics" style="position:relative;z-index:2"></div>
+        </div>
+      </div>
+      <div class="mgmt-preview-actions">
+        <button class="btn" id="mgmt-back-edit" type="button">← Back to Edit</button>
+        <button class="btn primary" id="mgmt-save-preview" type="button">Save Song</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DIALOGS
+     ============================================================ -->
+<!-- Delete Confirmation -->
+<div class="dialog-overlay" id="dlg-delete" hidden>
+  <div class="dialog-box">
+    <h3>🗑️ Delete Song</h3>
+    <p>Are you sure you want to delete:</p>
+    <p class="song-name" id="dlg-delete-name"></p>
+    <p>This action will remove the song from your local collection.</p>
+    <div class="dialog-actions">
+      <button class="btn" id="dlg-delete-cancel" type="button">Cancel</button>
+      <button class="btn danger" id="dlg-delete-confirm" type="button">Delete Song</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Delete Confirmation -->
+<div class="dialog-overlay" id="dlg-bulk-delete" hidden>
+  <div class="dialog-box">
+    <h3>🗑️ Delete Multiple Songs</h3>
+    <p id="dlg-bulk-msg">You are about to delete 0 songs.</p>
+    <p>Are you sure you want to continue?</p>
+    <div class="dialog-actions">
+      <button class="btn" id="dlg-bulk-cancel" type="button">Cancel</button>
+      <button class="btn danger" id="dlg-bulk-confirm" type="button">Delete Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- Duplicate Title Warning -->
+<div class="dialog-overlay" id="dlg-duplicate" hidden>
+  <div class="dialog-box">
+    <h3>⚠️ Duplicate Title</h3>
+    <p>A song with the title <span class="song-name" id="dlg-dup-name"></span> already exists.</p>
+    <p>Two different songs may have the same title. Do you want to save anyway?</p>
+    <div class="dialog-actions">
+      <button class="btn" id="dlg-dup-back" type="button">Go Back</button>
+      <button class="btn primary" id="dlg-dup-save" type="button">Save Anyway</button>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Defaults Confirmation -->
+<div class="dialog-overlay" id="dlg-restore" hidden>
+  <div class="dialog-box">
+    <h3>🔄 Restore Default Songs</h3>
+    <p>This will remove all songs you added and undo all edits and deletions.</p>
+    <p><strong>This action cannot be undone unless you export a backup first.</strong></p>
+    <div class="dialog-actions">
+      <button class="btn" id="dlg-restore-cancel" type="button">Cancel</button>
+      <button class="btn ghost" id="dlg-restore-export" type="button">📥 Export Backup</button>
+      <button class="btn danger" id="dlg-restore-confirm" type="button">Restore Defaults</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Summary -->
+<div class="dialog-overlay" id="dlg-import" hidden>
+  <div class="dialog-box">
+    <h3>📤 Import Summary</h3>
+    <dl class="dialog-import-summary" id="dlg-import-summary"></dl>
+    <p>Would you like to export a backup before importing?</p>
+    <div class="dialog-actions">
+      <button class="btn" id="dlg-import-cancel" type="button">Cancel</button>
+      <button class="btn ghost" id="dlg-import-export" type="button">📥 Export Backup</button>
+      <button class="btn primary" id="dlg-import-confirm" type="button">Import Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="mgmt-import-file" accept=".json" hidden>
+
+<script>
+"use strict";
+/* ============================================================
+   Telugu Songs Lyrics Notebook — Offline Single-File App v2
+   With Song Management System
+   ============================================================ */
+
+/* ============================================================
+   DEFAULT SONG DATA (baked into HTML — never modified)
+   ============================================================ */
+const DEFAULT_SONGS = [
+  {
+    "id": "1",
+    "title": "Maate Manthramu",
+    "movie": "Seethakoka Chilaka",
+    "music": "Ilaiyaraja",
+    "lyricist": "Veturi",
+    "singers": "S.P.Balasubramanyam, S.P Shailaja",
+    "extra": [],
+    "lyrics": "ఓం శతమానం భవతి సత్తాహయు పురుష\nశతేంద్రియహ్ ఆయుశ్శేవేంద్రియే ప్రతి దిష్టతీ\n\nమాటే మంత్రమూ మనసే బంధమూ\nఈ మమతే ఈ సమతే మంగళ వాద్యమూ\nఇది కళ్యాణం కమనీయం జీవితం\nఓ ఓ మాటే మంత్రమూ మనసే బంధమూ\nఈ మమతే ఈ సమతే మంగళ వాద్యమూ\nఇది కళ్యాణం కమనీయం జీవితం\nఓ ఓ మాటే మంత్రమూ మనసే బంధమూ\n\nనీవే నాలో స్పందించినా\nఈ ప్రియా లయలో శృతి కలిసే ప్రాణమిదే\nనేనే నీవుగా పువ్వూ తావిగా\nసంయోగాల సంగీతాలు విరిసే వేళలో\n\nమాటే మంత్రమూ మనసే బంధమూ\nఈ మమతే ఈ సమతే మంగళ వాద్యమూ\nఇది కళ్యాణం కమనీయం జీవితం\nఓ ఓ మాటే మంత్రమూ మనసే బంధమూ\n\nనేనే నీవై ప్రేమించినా\nఈ అనురాగం పలికించే పల్లవివే\nఎద నా కోవెలా ఎదుటే దేవతా\nవలపై వచ్చి వరమే ఇచ్చి కలిసే వేళలో\n\nమాటే మంత్రమూ మనసే బంధమూ\nఈ మమతే ఈ సమతే మంగళ వాద్యమూ\nఇది కళ్యాణం కమనీయం జీవితం\nఓ ఓ లాలా లాలాలా లాలా లాలాలా"
+  },
+  {
+    "id": "2",
+    "title": "Kanya Kumari Kanapada dari",
+    "movie": "బొబ్బిలి రాజా (1990)",
+    "music": "ఇళయరాజా",
+    "lyricist": "సిరివెన్నెల",
+    "singers": "బాలు, జానకి",
+    "extra": [],
+    "lyrics": "పల్లవి :\nకన్యాకుమారీ.. కనపడదా దారి..\nకయ్యాలమారీ పడతావే జారి..\nపాతాళం కనిపెట్టేలా... ఆకాశం పనిపెట్టేలా\nఊగకేమరి... మతిలేని సుందరీ\nజిమిచకు... జిమిచకు జా..\nచకు..జిమిచకు..జిమిచకు జా..\n\nగోపాలబాలా... ఆపర ఈ గోలా\nఈ కైపు ఇలా... ఊపర ఉయ్యాలా..\nమైకంలో మయసభ చూడు... మహారాజా రాణా తోడు..\nసాగనీ..మరీ..సరదాల గారడీ\nజిమిచకు..జిమిచకు జా..\nచకు..జిమిచకు..జిమిచకు జా..\n\nచరణం 1 :\nకొండలూ..గుట్టలూ..చిందులాడే తదిగినతోమ్\nవాగులూ..వంకలూ..ఆడిచూసే... కథ చెపుదాం\nతూనీగ రెక్కలెక్కుదాం..సూరీడు పక్క నక్కుదాం\nఊదేటి కొమ్ము వెదుకుదాం..బంగారు జింకనడుగుదాం\nచూడమ్మా... హంగామా...\nఅడివంతా... రంగేద్దాము\nసాగించేయ్... వెరైటీ పోగ్రాం..\nకళ్ళవిందుగా... పైత్యాల పండుగా\nజిమిచకు..జిమిచకు జా..\nచకు..జిమిచకు..జిమిచకు జా..\n\nఆహా..కన్యాకుమారీ..\nకనపడదా దారి..ఉహు..\nకయ్యాలమారీ పడతావే జారి\nమైకంలో మయసభ చూడు..మహారాజా రాణా తోడు..\nసాగనీ..మరీ..సరదాల గారడీ\nజిమిచకు..జిమిచకు జా..\nచకు..జిమిచకు..జిమిచకు జా..\nచాజజా జాంచకు జకుం..హా..ఏహే..\nహై..హేహే..జకు జకు జకు\nజా జా జా జాంచకు జాజా\n\nచరణం 2 :\nడేగతో ఈగలే ఫైటు చేసే చడుగుడులో\nచేపలే చెట్టుపై పళ్ళుకోసే గడబిడిలో\nనేలమ్మ తప్పతాగెనూ... ఏమూలో తప్పిపోయేనో\nమేఘాల కొంగు పట్టుకో..తూలేటి నడక నాపుతూ\nఓయమ్మో..మాయమ్మో..\nదిక్కుల్నే ఆటాడించే..చిక్కుల్లో గందరగోళం..\nఒళ్ళు ఊగగా..ఎక్కిళ్ళు రేగగా\nజింకుచకు జింగుచకు జా\nచా..జింకుచకు జింగుచకు జా\nజాజజా జాంచకు జకుం..హా..ఏహే..\nహై..హేహే..జకు జకు జకు\nజా జా జా జాంచకు జాజా\n\nఏయ్..గోపాలబాలా..ఓయ్..ఆపర ఈ గోలా\nఈ కైపు ఇలా..హహహ..ఊపర ఉయ్యాలా..\nఓయ్..పాతాళం కనిపెట్టేలా..హా..\nఆకాశం పనిపెట్టేలా..ఊగకే మరి..ఆ..\nమతిలేని..సుందరీ...ఆ ఆ..\nజాజజా జాంచకు జకుం..హా..ఏహే..\n\nహై..హేహే..జకు జకు జకు\nజా జా జా జాంచకు జాజా\nసాగనీ..మరీ..సరదాల గారడీ\nజిమిచకు..జిమిచకు జా..\nచకు..జిమిచకు..జిమిచకు జా.."
+  },
+  {
+    "id": "3",
+    "title": "Manohara Na Hrudayamuna",
+    "movie": "Cheli",
+    "music": "Harris Jayaraj",
+    "lyricist": "Bhuvana chandra",
+    "singers": "Bombay Jayasree",
+    "extra": [],
+    "lyrics": "మనోహర నా హృదయమునే\nఓ మధువనిగా మలిచినానంట\nరతీవర ఆ తేనెలనే ఓ తుమ్మెదవై తాగిపొమ్మంట\n\nమనోహర నా హృదయమునే\nఓ మధువనిగా మలిచినానంట\nరతీవర ఆ తేనెలనే ఓ తుమ్మెదవై తాగిపొమ్మంట\n\nనా యవ్వనమే నీ పరమై పులకించే వేళ\nనా ఎదలో ఒక సుఖమే ఊగెనుగా ఉయ్యాల\n\nజడివానై ప్రియా నన్నే చేరుకోమ్మా\nశృతి మించుతోంది దాహం ఒక పాన్పుపై పవళిద్దాం\nకసి కసి పందాలెన్నో ఎన్నో కాసి\nనన్ను జయించుకుంటే నేస్తం నా సర్వస్వం అర్పిస్తా\nఎన్నటికి మాయదుగా చిగురాకు తొడిగే బంధం\nప్రతి ఉదయం నిను చూసి చెలరేగిపోవాలీ దేహం\n\nమనోహర నా హృదయమునే\nఓ మధువనిగా మలిచినానంట\nసుధాకర ఆ తేనెలనే ఓ తుమ్మెదవై తాగిపొమ్మంట\n\nఓ ప్రేమా ప్రేమా ...\nసందె వేళ స్నానం చేసి నన్ను చేరి\nనా చీర కొంగుతో ఒళ్ళు నువ్వు తుడుస్తావే అదొ కావ్యం\nదొంగమల్లే ప్రియా ప్రియా సడే లేక\nవెనకాలనుండి నన్ను హత్తుకుంటావే అదొ కావ్యం\nనీకోసం మదిలోనే గుడి కట్టినానని తెలియనిదా\nఓసారి ప్రియమారా ఒడిచేర్చుకోవా నీ చెలిని\n\nమనోహర నా హృదయమునే\nఓ మధువనిగా మలిచినానంట\nరతీవర ఆ తేనెలనే ఓ తుమ్మెదవై తాగిపొమ్మంట\nనా యవ్వనమే నీ పరమై పులకించే వేళ\nనా యదలో ఒక సుఖమే ఊగెనుగా ఉయ్యాల"
+  },
+  {
+    "id": "4",
+    "title": "Chukkalu Themmanna",
+    "movie": "April 1 Vidudhala",
+    "music": "Ilayaraja",
+    "lyricist": "Sirivennela",
+    "singers": "Chitra, Mano",
+    "extra": [
+      {
+        "label": "Cast",
+        "value": "Rajendra Prasad, Sobhana"
+      }
+    ],
+    "lyrics": "చుక్కలు తెమ్మన్నా తెంచుకు రానా ..\nచూస్తావా నా మైనా .. చేస్తానే ఏమైనా (2)\nనిన్నే మెప్పిస్తాను .. నన్నే అర్పిస్తాను .. వస్తానమ్మా ఎట్టాగైనా\n\nషోలే ఉందా ?\nఇదిగో ఇందా ..\nచాల్లే ఇది జ్వాల కాదా..\nతెలుగులో తీశారే బాలా !\n\nఖైదీ ఉందా?\nఇదిగో ఇందా..\nఖైదీ కన్నయ్య కాదే ..\nవీడికి అన్నయ్య వాడే !\n\nజగదేకవీరుడి కధా..ఇది పాత పిక్చర్ కదా\nఅతిలోక సుందరి తల .. అతికించి ఇస్తా పదా\nఏ మాయ చేసైనా ఒప్పించే తీరాలి\n\nచుక్కలు తెమ్మన్నా తెంచుకు రానా ..\nచూస్తావా నా మైనా .. చేస్తానే ఏమైనా\n\nఒకటా రెండా .. పదులా వందా\nబాకీ ఎగవేయకుండా .. బదులే తీర్చేది ఉందా\nమెదడే ఉందా .. మతి పోయిందా\nచాలే నీ కాకి గోలా .. వేళా పాళంటూ లేదా\n\nఏవైంది భాగ్యం కధా? కదిలిందా లేదా కధా?\nవ్రతమేదో చేస్తుందంటా .. అందాక ఆగాలటా\nసౌఖ్యంగా బ్రతకాలీ .. సౌఖ్యాలే పొందాలి\n\nచుక్కలు తెమ్మన్నా తెంచుకు రానా ..\nచూస్తావా నా మైనా .. చేస్తానే ఏమైనా\nనిన్నే మెప్పిస్తాను .. నన్నే అర్పిస్తాను .. వస్తానమ్మా ఎట్టాగైనా\n\nచుక్కలు తెమ్మన్నా తెంచుకు రానా ..\nచూస్తావా నా మైనా .. చేస్తానే ఏమైనా"
+  },
+  {
+    "id": "5",
+    "title": "Godari Gattu Meeda",
+    "movie": "Sankranthiki Vasthunam",
+    "music": "Bheems Ceciroleo",
+    "lyricist": "Bhaskarabhatla",
+    "singers": "Madhu Priya, Ramana Gogula",
+    "extra": [],
+    "lyrics": "తరరిరరారే రరరా\nతరరిరరారే రరరా\n\nగోదారి గట్టు మీద రామ సిలకవే\nఓ ఓ గోరింటా కెట్టుకున్న సందమామవే\nగోదారి గట్టు మీద రామ సిలకవే\nగోరింటాకెట్టుకున్న సందమామవే\n\nఊరంతా సూడు ముసుగే తన్ని నిద్దరపోయిందే\nఆరాటాలన్నీ తీరకపోతే ఏం బాగుంటుందే\nనాకంటూ ఉన్నా ఒకే ఒక్క ఆడ దిక్కువే\nనీతోటి కాకుండా నా బాధలు ఎవరికి చెప్పుకుంటానే\n\nగోదారి గట్టు మీద రామసిలకనే\nఆ ఆ గీ పెట్టి గింజుకున్నా నీకు దొరకనే\n\nహేయ్ విస్తరి ముందేసి పస్తులు పెట్టావే\nతీపి వస్తువు చుట్టూ తిరిగే ఈగను చేసావే\nఛీ ఛీ ఛీ సిగ్గే లేని మొగుడు గారండోయ్\nగుయ్ గుయ్ గుయ్ గుయ్ మంటూ మీదికి రాకండోయ్\nఒయ్ ఒయ్\n\nగంపెడు పిల్లల్తో ఇంటిని నింపావే\nసాప దిండు సంసారాన్ని మేడెక్కించావే\nహు ఇరుగు పొరుగు ముందు సరసాలొద్దండోయ్\nగురకెట్టి పడుకోరే గూర్కాల్లాగా మీ వాళ్ళు\n\nఏం చేస్తాం ఎక్కేస్తాం ఇట్టాగే డాబాలు\nపెళ్ళై సాన్నాల్లే అయినా కానీ మాస్టారు\nతగ్గేదే లేదంటూ నా కొంగెనకే పడుతుంటారు\n\nహేయ్ గోదారి గట్టు మీద రామ సిలకవే\nగోరింటాకెట్టుకున్న సందమామవే\n\nకొత్త కోకేమో కన్నే కొట్టిందే\nతెల్లారేలోగా తొందర పడమని చెవిలో చెప్పిందే\nఈ మాత్రం హింటే ఇస్తే సెంటే కొట్టెయ్‍నా\nఓ రెండు మూరల మల్లెలు చేతికి చుట్టెయ్‍నా\n\nఈ అల్లరి గాలేమో అల్లుకుపొమ్మందే\nమాటల్తోటి కాలక్షేపం మానెయ్ మంటుందే\nఅబ్బబ్బా కబడ్డీ కబడ్డీ అంటూ కూతకు వచ్చెయ్‍నా\n\nఏవండోయ్ శ్రీవారు మళ్లీ ఎపుడో అవకాశం\nఎంచక్కా బాగుంది చుక్కల ఆకాశం\nహెయ్ ఓసోసి ఇల్లాలా బాగుందే నీ సహకారం\nముద్దుల్తో చెరిపేద్దాం నీకు నాకు మధ్యన దూరం\n\nగోదారి గట్టు మీద రామసిలకనే\nహా నీ జంట కట్టుకున్న సందమామనే"
+  },
+  {
+    "id": "6",
+    "title": "Meesaala Pilla",
+    "movie": "Mana Shankara Varaprasad Garu",
+    "music": "Bheems Ceciroleo",
+    "lyricist": "Bhaskarabhatla",
+    "singers": "Udit Narayan, Swetha Mohan",
+    "extra": [],
+    "lyrics": "హే మీసాల పిల్లా\nనీ ముక్కు మీద కోపం కొంచెం తగ్గాలే పిల్లా ఆ ఆ\nమీసాల పిల్లా\nనీ ముక్కు మీద కోపం కొంచెం తగ్గాలే పిల్లా\n\nపొద్దున లేచిందగ్గర్నుంచి డైలీ యుద్ధాలా\nమొగుడు పెళ్లాలంటేనే కంకి కొడవళ్ళా\nఅట్టా కన్నెర్ర జెయ్యలా కారాలే నూరేలా\nఇట్టా దుమ్మెత్తి పోయ్యలా దూరాలే పెంచేలా\nకుందేలుకు కోపం వస్తే చిరుతకి చెమటలు పట్టేలా\n\nనీ వేషాలు చాల్లే\nనువ్ కాకా పడితే కరిగేటంత సీనే లేదులే\nఅందితే జుట్టు అందకపోతే కాళ్ళ బేరాలా\nనువ్విట్టా ఇన్నోసెంటే ఫేసే పెడితే ఇంకా నమ్మాలా\nఓ బాబు నువ్వే ఇంతేనా\nమగజాతి మొత్తం ఇంతేనా\nగుండెల్లో ముల్లు గుచ్చి\nపువ్వులు చేతికి ఇస్తారా\n\nమీసాల పిల్లా\nనీ ముక్కు మీద కోపం కొంచెం తగ్గాలే పిల్లా\nవేషాలు చాల్లే\nనువ్ కాకా పడితే కరిగేటంత సీనే లేదులే\nమీసాల పిల్లా\n\nఆ ఎదురింటి ఎంకట్రావ్ కుళ్ళుకు సచ్చుంటాడు\nపక్కింటి సుబ్బారావ్ దిష్టేట్టుంటాడు\nఈడు మట్టే కొట్టుకు పోను\nవాడు యేట్లో కొట్టుకు పోనూ\nఆ ఏడు కొండల వెంకన్నా\nనా బాధని చూసుంటాడు\nశ్రీశైలం మల్లన్నా కరుణించుంటాడు\nకనుకే నీతో కటయ్యాను\nచాల హ్యాపీగుంటున్నాను\n\nనువ్వింత హార్ష్గా మాటాడాలా\nహార్ట్ హర్టై పోయేలా\nఏ తప్పు చెయ్యకుండా\nభూమ్మీదా ఎవ్వరైనా ఉంటారా\nనీ తప్పులు ఒకటా రెండా\nచిత్రగుప్తుడి చిట్టాలా\n\nహే మీసాల పిల్లా\nనీ ముక్కు మీద కోపం కొంచెం తగ్గాలే పిల్లా ఆ ఆ\nనీ వేషాలు చాల్లే\nనువ్ కాకా పడితే కరిగేటంత సీనే లేదులే\n\nరాజి పడదామంటే రావే మాజీ ఇల్లాలా\nనువ్వు రోజు పెట్టే నరకంలోకి మళ్ళీ దూకాలా\nఅబ్బా పాతవన్నీ తోడాలా నా అంతు ఏదో చూడాలా\nకలకత్తా కాళీమాత నీకు మేనత్త అయ్యేలా\n\nహే మీసాల పిల్లా\nనా మొహం మీద అన్ని సార్లు డోరే వెయ్యాలా\nహాల్లో బాగా చలిగా ఉంది దుప్పటి కప్పండ్రా"
+  },
+  {
+    "id": "7",
+    "title": "Telusa Manasa",
+    "movie": "Criminal",
+    "music": "M M Keeravani",
+    "lyricist": "Sirivennela",
+    "singers": "K.S. Chitra, S.P.Balasubramanyam",
+    "extra": [],
+    "lyrics": "తెలుసా మనసా ఇది ఏనాటి అనుబంధమో\nతెలుసా మనసా ఇది ఏజన్మ సంబంధమో\nతరిమిన ఆరు కాలాలు ఏడూ లోకాలు చేరలేని ఒడిలో\nవిరహపు జాడలెనాడు వేడి కన్నేసి చూడలేని జతలో\nశత జన్మాల బంధాల బంగారు క్షణమిది\n\nతెలుసా మనసా ఇది ఏనాటి అనుబంధమో\nతెలుసా మనసా ఇది ఏజన్మ సంబంధమో\n\nప్రతి క్షణం నా కళ్ళల్లో నిలిచే నీ రూపం\nబ్రతుకులో ఓ అడుగడుగునా నడిపె నీ స్నేహమ్\nఊపిరే నీవుగా ప్రాణమే నీదిగా\nపది కాలాలు వుంటాను నీ ప్రేమ సాక్షిగా\n\nతెలుసా మనసా ఇది ఏనాటి అనుబంధమో\n\nDarling, every breath you take, every move you make, I will be there.\nWhat would I do without you? I want to love you forever and ever and ever.\n\nఎన్నడూను తీరిపోని రుణముగా ఉండిపో\nచెలిమితో తీగసాగే మల్లెగా అల్లుకో\nలోకమే మారినా కాలమే ఆగిన\nమన ఈగాధ మిగలాలి తుదిలేని చరితగా\n\nతెలుసా మనసా ఇది ఏనాటి అనుబంధమో\nతెలుసా మనసా ఇది ఏజన్మ సంబంధమో\n\nతరిమిన ఆరు కాలాలు ఏడూ లోకాలు చేరలేని ఒడిలో\nవిరహపు జాడలెనాడు వేడి కన్నేసి చూడలేని జతలో\nశత జన్మాల బంధాల బంగారు క్షణమిది\n\nతెలుసా మనసా ఇది ఏనాటి అనుబంధమో"
+  },
+  {
+    "id": "8",
+    "title": "Unna maata",
+    "movie": "Nuvvu Naku Nacchav",
+    "music": "Koti",
+    "lyricist": "Sirivennela",
+    "singers": "Telu Vijaya, Swetha Menon",
+    "extra": [],
+    "lyrics": "ఉన్న మాట చెప్పనీవు ఊరుకుంటే ఒప్పుకోవు ఇంకెలాగ సత్యభామ\nనన్ను దాటి వెల్లలేవు నిన్ను నీవు దాచలేవు ఏమి చేయనోయి రామ\nఅన్నుకున్నా తప్ప్పు కదా మోమాటం ముప్పుకదా\nమనసైతే ఉంది కదా మనమాటే వినదు కదా\nపంతం మానుకో భయం దేనికో\n\nఉన్న మాట చెప్పనీవు ఊరుకుంటే ఒప్పుకోవు\nఇంకెలాగ సత్యభామ\nనన్ను దాటి వెల్లలేవు నిన్ను నీవు దాచలేవు\nఏమి చేయనోయి రామ\n\nవద్దనకొద్ది తుంటరిగా తిరగకలా నా వెనకా\nనిద్దర్లో కూడ ఒంటరిగా వదలవుగా\nనన్నస పెట్టి ఈ సరదా రేపినదే నువ్ గనుకా\nనా కొంగు పట్టి నడవనిదే కుదరదుగా\nఅడుగడుగున ఎదురైతే ఏ దారి తోచదుగా\nఅటు ఇటు ఎటు తేల్చవుగా మన కధను తొందరగా\nప్రతీ చోట నీ నవ్వే పిలుస్తోందిగా\n\nనన్ను దాటి వెల్లలేవు నిన్ను నీవు దాచలేవు\nఏమి చేయనోయి రామ\nఉన్న మాట చెప్పనీవు ఊరుకుంటే ఒప్పుకోవు\nఇంకెలాగ సత్యభామ\n\nఅమాయకంగ చూడకలా వేడుకలా చిలిపికలా\nఅయోమయంగ వేయకలా హాయి వల\nనీమీదికొచ్చి మురిపాలే వాలదుగా వాలుజడా\nదానొంక చూసి ఎందుకట గుండెదడ\nమరి మరి శృతి మించి ఇలా నను మైమరపించకలా\nతడబడి తలవంచి ఇలా తలపును అణిచేస్తే ఎలా\nమరేం చేయనే నీతో ఎలా వేగనే\n\nనన్ను దాటి వెల్లలేవు నిన్ను నీవు దాచలేవు\nఏమి చేయనోయి రామ\nఉన్న మాట చెప్పనీవు ఊరుకుంటే ఒప్పుకోవు\nఇంకెలాగ సత్యభామ\n\nఅన్నుకున్నా తప్ప్పు కదా మోమాటం ముప్పుకదా\nమనసైతే ఉంది కదా మనమాటే వినదు కదా\nపంతం మానుకో భయం దేనికో\n\nఉన్న మాట చెప్పనీవు ఊరుకుంటే ఒప్పుకోవు\nఇంకెలాగ సత్యభామ\nనన్ను దాటి వెల్లలేవు నిన్ను నీవు దాచలేవు\nఏమి చేయనోయి రామ"
+  },
+  {
+    "id": "9",
+    "title": "Raarandoi Veduka Choodham",
+    "movie": "Rarandoi Veduka Chudham",
+    "music": "Devi Sri Prasad",
+    "lyricist": "Ramajogayya Sastry",
+    "singers": "Ranjith, Gopika Purnima",
+    "extra": [],
+    "lyrics": "బుగ్గ చుక్క పెట్టుకుంది సీతమ్మ సీతమ్మ\nకంటి నిండా ఆశలతో మా సీతమ్మ\nతాళిబొట్టు చేతబట్టి రామయ్య రామయ్య\nసీత చెయ్యి పట్ట వచ్చే మా రామయ్య\n\nపెద్దలు వేసిన అక్షతలు దేవుడు పంపిన దీవెనలు\nదివిలో కుదిరిన దంపతులు ఈ చోట కలిశారు ఇవ్వాల్టికి\nఆటలు పాటలు వేడుకలు మాటకు మాటలు అల్లరులు\nతియ్యని గుర్తుల కానుకలు వెన్నంటి ఉంటాయి వెయ్యేళ్ళకి\n\nరా రండోయ్ వేడుక చూద్దాం\nఈ సీతమ్మని రామయ్యన్ని ఒకటిగా చేసేద్దాం\nఆడేద్దాం పాడేద్దాం నవేద్దాం ఆ నవేద్దాం\n\nవారు వీరని తేడా లేదులే ఇకపై ఒక్కటే పరివారం\nపేరు పేరునా పిలిచే వరసలై ఎదిగే ప్రేమలే గుణకారం\nఇద్దరి కూడిక కాదు ఇది వందల మనసుల కలయికిది\nఈ సుముహూర్తమే వారధిగా భూగోళమే చిన్నదవుతున్నది\n\nరా రండోయ్ వేడుక చూద్దాం\nవేద మంత్రాలతో ఈ జంటని ఆలు మగలందం\nఆడేద్దాం పాడేద్దాం నవేద్దాం ఆ నవేద్దాం\n\nకాలం కొమ్మపై మెరిసే నవ్వులై కలిసే గువ్వలే బంధువులు\nకదిలే దారిలో మెదిలే గురుతులై నడిపే దివ్వెలే వేడుకలు\nఎపుడో తెలిసిన చుట్టాలు ఇపుడే కలిసిన స్నేహితులు\nమనసుని తడిమిన సంగతులు కనువిందుగా ఉంది ఈ పందిరి\n\nరా రండోయ్ వేడుక చూద్దాం\nఅయిన వాళ్ళందరం ఈ వెళిలా ఒక్కటిగా చేరాం\nఆడేద్దాం పాడేద్దాం నవేద్దాం ఆ నవేద్దాం"
+  },
+  {
+    "id": "10",
+    "title": "Prema Geema Thassadiyya",
+    "movie": "Rowdy Alludu",
+    "music": "Bappi Lahiri",
+    "lyricist": "Bhuvana Chandra",
+    "singers": "K.S. Chitra, S.P.Balasubramanyam",
+    "extra": [],
+    "lyrics": "ప్రేమా గీమా తస్సాదియ్యా పక్కన పెట్టు\nవన్ టూ త్రి ఫోర్ వయ్యారంగా పట్టేయ్ పట్టు\n\nరాతిరంతా జాతరే ఇక నీ పని ఆకరే\nజోరు జరా చూడు బుల్లెమ్మా\n\nకు కు కు కు\nకు కు కు కు\n\nప్రేమా గీమా తస్సాదియ్యా\nపక్కన పెట్టు\nవన్ టూ త్రి ఫోర్ వయ్యారంగా\nపట్టేయ్ పట్టు\n\nఏం పట్టు బాపురే\nఅవునంటే కిరికిరే\nకొల్లగొట్టిపోకు ఖజానా\n\nకు కు కు కు\nకు కు కు కు\n\nవహ్వా బేబీ వెథర్ బాగుందే\nఏదో మూడు ముదిరిపోయిందే\nఅయ్యో రయ్యో వరస మారిందే\nఅబ్బాయి గారి పొగరు నచ్చిందే\n\nనాటో నీటో ఎంచుకుందామా\nఫిఫ్టీ ఫిఫ్టీ పంచుకుందామా\nఇక ఓపలేను వదులు బుల్లోడా\n\nఐ లవ్ యు, యు లవ్ మీ, ఐ కిస్ యు, యు కిస్ మీ\n\nప్రేమా గీమా తస్సాదియ్యా\nపక్కన పెట్టు\nవన్ టూ త్రి ఫోర్ వయ్యారంగా\nపట్టేయ్ పట్టు\n\nరాతిరంతా జాతరే\nఇక నీ పని ఆకరే\nజోరు జరా చూడు బుల్లెమ్మా\n\nకు కు కు కు\n\nఅంతో ఇంతో దూరముండలా\nఅమ్మ నాన్న సిగ్నల్ ఇవ్వాలా\nఎంతో కొంత లాభముండాలే\nకొద్దో గొప్పో చిత్తగించాలె\n\nఅరెరే డేట్ టైం ఫిక్స్ చేయమంట\nఅపుడు మనకే రిస్క్ లేదంట\nఅరె బాత్ నహి సాత్ చలోనా\nచలో చలో\n\nఐ లవ్ యు, యు లవ్ మీ, ఐ కిస్ యు, యు కిస్ మీ\n\nప్రేమా గీమా తస్సాదియ్యా\nపక్కన పెట్టు\nవన్ టూ త్రి ఫోర్ వయ్యారంగా\nపట్టేయ్ పట్టు\n\nరాతిరంతా జాతరే\nఇక నీ పని ఆఖరి\nజోరు జరా చూడు బుల్లెమ్మా\n\nకు కు ఋ కు కు\n\nప్రేమా గీమా తస్సాదియ్యా\nపక్కన పెట్టు\nవన్ టూ త్రి ఫోర్ వయ్యారంగా\nపట్టేయ్ పట్టు\n\nఏం పట్టు బాపురే\nఅవునంటే కిరికిరే\nకొల్లగొట్టిపోకు ఖజానా\nన న న న\n\nకు కు కు కు\nకు కు ఋ కు కు\nకు కు ఋ కు కు\nకు కు ఋ కు కు"
+  },
+  {
+    "id": "11",
+    "title": "Kaikaluri kanne pilla",
+    "movie": "Sneham Kosam",
+    "music": "S. A. Rajkumar",
+    "lyricist": "Veturi",
+    "singers": "Udit Narayan, Kavitha Krishnamurty",
+    "extra": [],
+    "lyrics": "కైకలూరి కన్నె పిల్ల కోరుకుంటే రానా మల్ల\nగుమ్మా ముద్దు గుమ్మా గుండె నీదేనమ్మా\nకోరుకున్న కుర్రవాడ కోరివచ్చా సందకాడా\nఎమ్మో ఎమ్మో యమ్మ బుగ్గ కందెనమ్మ\nచల్లకొచ్చేనమ్మ ఇక లొల్లి పెట్టకమ్మ\nకోరింది ఇచిపుచుకోవే గుంతలక్కీడి గుమ్మా\n\nకైకలూరి కన్నె పిల్ల కోరుకుంటే రానా మల్ల\n\nవలపే పెదాలతో పదాలు పాడే\nకదిలే నరాలలో స్వరాలూ మీటే\nతనువే తహ తహ తపించిపోయే\nకనులే నిషాలతో కవాలి పడే\n\nసు సు సుందరి పులా పందిరి\nపో పో పోకిరి ఛాలికా అల్లరి\n\nనీ ఏడూ తాకదమ్మ నే ఎట్టా వేగేనమ్మా\nనీ ఒంటి గుట్టు బయట పెట్టి\nబెట్టు చేయకమ్మ\n\nకోరుకున్న కుర్రవాడ కోరివచ్చా సందకాడా\n\nమనసే అరేబియా ఎడారి ఎండై\nనడుమే నైజిరియా నాట్యం చేసే\nహే\nమల్లెపూల వలే మంచే కురిపిస్తా\nపారె సెలయేటిలో స్నానం చేయిస్తా\n\nరా రా సుందరా నీకె విందు రా\nజ జ జాతర ఉంది ముందర\nనిట్ఠాయినా పోటుగాడ రాసుంది తోటకాడ\nనా కట్టుబొట్టు తేనే పట్టు\nఏమా ఏమా యమ్మ\n\nకైకలూరి కన్నె పిల్ల కోరుకుంటే రానా మల్ల\nగుమ్మా ముద్దు గుమ్మా గుండె నీదేనమ్మా\nకోరుకున్న కుర్రవాడ కోరివచ్చా సందకాడా\nఎమ్మో ఎమ్మో యమ్మ బుగ్గ కందెనమ్మ\n\nచల్లకొచ్చేనమ్మ ఇక లొల్లి పెట్టకమ్మ\nకోరింది ఇచిపుచుకోవే గుంతలక్కీడి గుమ్మా\nకైకలూరి కన్నె పిల్ల కోరుకుంటే రానా మల్ల\nగుమ్మా ముద్దు గుమ్మా బుగ్గ కందెనమ్మ"
+  },
+  {
+    "id": "12",
+    "title": "Monna Kanipinchaavu",
+    "movie": "Surya Son of Krishnan",
+    "music": "Harris Jayaraj",
+    "lyricist": "Veturi",
+    "singers": "Naresh Iyer, Prashanthini",
+    "extra": [],
+    "lyrics": "మొన్న కనిపించావు మైమరచిపోయాను\nఅందాలతో నన్ను తూట్లు పొడిచేసావే\nఇన్నెన్నినాళ్ళైనా నీ జాడ పొడలేక\nఎందెందు వెతికానో కాలమే వృధాయనే\n\nపరువాల నీ వెన్నెల కనలేని నా వేదన\nఈ పొద్దే నా తోడు వచ్చేయ్ ఇలా\nఊరంతా చూసేలా అవుదాం జత\nఈ పొద్దే నా తోడు వచ్చేయ్ ఇలా\nఊరంతా చూసేలా అవుదాం జత\n\nమొన్న కనిపించావు మైమరచిపోయాను\nఅందాలతో నన్ను తూట్లు పొడిచేసావే\n\nఇన్నెన్నినాళ్ళైనా నీ జాడ పొడలేక\nఎందెందు వెతికానో కాలమే వృధాయనే\n\nత్రాసులో నిన్నే పెట్టి తూకానికి పుత్తడి పెడితే\nతులాభారం తూగేది ప్రేయసికే\nముఖం చూసి పలికే వేళ భలే ప్రేమ చూసిన నేను\nహత్తుకోకపోతానా అందగాడా\n\nఓ నీడవోలే వెంబడి ఉంటా\nతోడుగా చెలీ\nపొగవోలే పరుగున వస్తా\nతాకనే చెలీ\nవేడుకలు కలలు నూరు\nవింత ఓ చెలి\n\nమొన్న కనిపించావు మైమరచిపోయాను\nఅందాలతో నన్ను తూట్లు పొడిచేసావే\n\nఇన్నెన్నినాళ్ళైనా ఓ మై లవ్\nనీ జాడ పొడలేక ఎస్ మై లవ్\nఎందెందు వెతికానో\nకాలమే వృధాయనే\n\nకడలి నేల పొంగే అందం అలలు వచ్చి తాకే తీరం\nమనసు జిల్లుమంటుంది ఈ వేళలో\nతలవాల్చి ఎడమిచ్చావే వేళ్ళు వేళ్ళు కలిపేసావే\nపెదవికి పెదవి దూరమెందుకే\n\nపగటి కలలు కన్నా నిన్ను\nకునుకులేకనే\nహృదయమంత నిన్నే కన్నా\nదరికిరాకనే\nనువ్వు లేక నాకు లేదు\nలోకమన్నదే\n\nమొన్న కనిపించావు మైమరచిపోయాను\nఅందాలతో నన్ను తూట్లు పొడిచేసావే\n\nఇన్నెన్నినాళ్ళైనా నీ జాడ పొడలేక\nఎందెందు వెతికానో కాలమే వృధాయనే\n\nపరువాల నీ వెన్నెల కనలేని నా వేదన\n\nఈ పొద్దే నా తోడు వచ్చేయ్ ఇలా\nఊరంతా చూసేలా అవుదాం జత\n\nఈ పొద్దే నా తోడు వచ్చేయ్ ఇలా\nఊరంతా చూసేలా అవుదాం జత\n\nవెన్నెలా వెన్నెలా వెన్నెలా"
+  },
+  {
+    "id": "13",
+    "title": "Paruvam vaanaga",
+    "movie": "Roja",
+    "music": "A.R.Rahman",
+    "lyricist": "Rajashri",
+    "singers": "S.P.Balasubramanyam, Sujatha",
+    "extra": [],
+    "lyrics": "పరువం వానగా నేడు కురిసేనులే\nపరువం వానగా నేడు కురిసేనులే\nముద్దు మురిపాలలో ఈడు తడిసేనులే\nనా ఒడిలోన ఒక వేడి సెగ రేగెలే\nఆ సడిలోన ఒక తోడు ఎద కోరెనే\n\nనదివే నీవైతే అల నేనే\nఒక బాణివైతే నీ రాగం నేనే\n\nపరువం వానగా నేడు కురిసేనులే\nముద్దు మురిపాలలో ఈడు తడిసేనులే\n\nనీ చిగురాకు చూపులే అవి నా ముత్యాల సిరులే\nనీ చిన్నారి ఊసులే అవి నా బంగారు నిధులే\nనీ పాల పొంగుల్లో తేలనీ నీ గుండెలో నిండనీ\nనీ నీడలా వెంట సాగనీ నీ కళ్ళల్లో కొలువుండనీ\n\nపరువం వానగా నేడు కురిసేనులే\nముద్దు మురిపాలలో ఈడు తడిసేనులే\nనా ఒడిలోన ఒక వేడి సెగ రేగెలే\nఆ సడిలోన ఒక తోడు ఎద కోరెనే\nపరువం వానగా నేడు కురిసేనులే\nముద్దు మురిపాలలో ఈడు తడిసేనులే\n\nనీ గారాల చూపులే నాలో రేపేను మోహం\nనీ మందార నవ్వులే నాకే వేసేను బంధం\nనా లేత మధురాల ప్రేమలో నీ కలలు పండించుకో\nనా రాగ బంధాల చాటులో నీ పరువాలు పలికించుకో\n\nపరువం వానగా నేడు కురిసేనులే\nముద్దు మురిపాలలో ఈడు తడిసేనులే\nనా ఒడిలోన ఒక వేడి సెగ రేగెలే\nఆ సడిలోన ఒక తోడు ఎద కోరెనే\nనదివే నీవైతే అల నేనే\nఒక పాటనీవైతే నీ రాగం నేనే\n\nపరువం వానగా నేడు కురిసేనులే\nముద్దు మురిపాలలో ఈడు తడిసేనులే"
+  },
+  {
+    "id": "14",
+    "title": "Dailamo Dailamao",
+    "movie": "Mahatma",
+    "music": "Vijay Antony",
+    "lyricist": "Sirivennela",
+    "singers": "Megha, Sangeetha Rajeshwaran",
+    "extra": [],
+    "lyrics": "డైలమో డైలామో డైలా డైలా డైలమో\nడైలమో డైలమో డైలమో డైలమో\nడైలమో డైలామో డైలా డైలా డైలమో\nడైలమో డైలమో డైలమో డైలమో\n\nనువ్వు వస్తావో రావో అదో డైలమా\nనువ్వు వస్తావో రావో అదో డైలమా\nఎంచేస్తోవో ఏమో అదో డైలమా\n\nరహస్యంగా ఏదైనా అంటావ్ ఏమో\nసందేహంగా చూస్తూనే ఉంటావ్ ఏమో\n\nడైలమో డైలామో డైలా డైలా డైలమో\nడైలమో డైలమో డైలమో డైలమో\nడైలమో డైలామో డైలా డైలా డైలమో\nడైలమో డైలమో డైలమో డైలమో\n\nబోలోజి బాలాజీ ఏంకావాలో లేలోజి\nకౌగిలి లో పడిపోదామా రాజి రాజి\nనా మాటలో లాలూజీ కావలి అంటే లోలాక్షి\nకిడించి మెలించాలె కుర్చీ\n\nనోరారా మెచ్చి మెచ్చి మెచ్చి మెచ్చి\nగోరారా గీచి గీచి గీచి గీచి\nకన్నారా హదే పెంచి పన్నారా ముద్దె ఇచ్చి\nలైలని లాలించి చూపించు లవ్ లో రుచి\n\nడైలమో డైలామో డైలా డైలా డైలమో\nడైలమో డైలమో డైలమో డైలమో\nడైలమో డైలామో డైలా డైలా డైలమో\nడైలమో డైలమో డైలమో డైలమో\n\nకావిస్తా ఊరించి కాస్తో కూస్తో మేనేజ్ చై\nకేవ్ అంటుంది ఏమో నాతో పేచీ\nఇందాక రప్పించి కాదంటానా కదిలించి\nకానిలే నాకు ఏంటి అంట బూచి\n\nకొరిగా నచ్చి నచ్చి నచ్చి నచ్చి\nకనుక గ వచ్చి వచ్చి వచ్చి వచ్చి\nచేచిగా నిన్నే మెచ్చి నాజుగా నచ్చే వీచి\nవెచ్చము గ విదిస్తా విచేయి మందిచ్చి\n\nడైలమో డైలామో డైలా డైలా డైలమో\nడైలమో డైలమో డైలమో డైలమో\nడైలమో డైలామో డైలా డైలా డైలమో\nడైలమో డైలమో డైలమో డైలమో\n\nనువ్వు వస్తావో రావో అదో డైలమా\nనువ్వు వస్తావో రావో అదో డైలమా\n\nఎంచేస్తోవో ఏమో అదో డైలమా\nరహస్యం గ ఏదైనా అంటావు ఏమో\nసందేహం గ చూస్తూనే ఉంటావు ఏమో"
+  },
+  {
+    "id": "15",
+    "title": "Diyalo Diyala",
+    "movie": "100% Love",
+    "music": "Devi Sri Prasad",
+    "lyricist": "Chandrabose",
+    "singers": "Priya Himesh, Kushi Murali",
+    "extra": [],
+    "lyrics": "ఆ\nముద్దుల మువ్వా రావు గారి\nపెద్ద అమ్మాయి పద్దెమిదో\nఏటా పైటేసుకుందంట\nడియాలో డియాలా\n\nసిన్న వీధి సెక్కాలా సిట్టమ్మ\nగారి సిన్న కోడలు నలభయ్యో ఏటా నీళ్లోసుకుందంట\nడియాలో డియాలా\n\nరంగుల రాజా రావు గారి మూడో\nఅమ్మాయి పక్కింటి పుల్ల రావు గారి\nనాలుగో అబ్బాయితో జంప్ జలాన్ని అంట\nడియాలో డియాలా\n\nఇంకా మన మేరగంటి మంగ తాయారు\nగాజుల సిట్టమ్మ దుబాయ్ సత్యవతి\nఅల్లల్లా మొగుళ్ళని వదిలేశారంటా\nడియాలో డియాలో\n\nఆళ్ళ కధలు నెం సెప్పలేను గని\nఆళ్ళ నోటి తో ఆల్లే సెప్పుకుంటారంతా\nడియాలో డియాలా\n\nమొదలెట్టవే మంగ తాయారు\n\nఅర్ధ రూపాయి ఇచ్చాడు అద్దం కొనుక్కోమని అన్నాడు\nడియాలో డియాలా డియా డియా డియాలా\nఒక్క రూపాయి ఇచ్చాడు స్టికర్ కొనుక్కోమన్నాడు\nడియాలో డియాలా డియా డియా డియాలా\nరెండు రూపాయిలిచ్చాడు రిబ్బన్ కొనుక్కోమన్నాడు\nడియాలో డియాలా\nమూడు రూపాయిలిచ్చాడు ముక్కెర కొనుక్కోమన్నాడు\nడియాలో డియాలా\nపది రూపాయిలిచ్చి పాండ్స్ పొడి కొనుక్కోమన్నాడు\nనలభై రూపాయిలిచ్చి నకిలీ నెక్లెస్ కొనుక్కోమన్నాడు\nఅన్ని కొనిచ్చి అలంకరించి ఐదు లచ్చలకు బేరం పెట్టి\nఆస లేని పస లేని ముసలోడి నన్నమ్మేసాడు\n\nపిల్ల నీ బావ నిస్తావా తోలుకెళ్ళి తెల్లారి తీసుకొస్తాను\nయాలో ఇయ్యలో\nఈ\nపిల్ల నీ బావ నిస్తావా ఎడి కాస్త చల్లార బెట్టుకొస్తాను\nయాలో ఇయ్యలో\nఆమ్మో నా బావ నిష్ఠాన జూనియర్ షారుఖ్ ని జారిణిస్తాన\nఆమ్మో నా బావ నిస్తానా ఇంకో కాజోల్ ని చావనిస్తానా\n\nమెరగంటి మంగ తాయారు\nమీ ముందు మిల మిల మెరిసి పోయింది\nగాజుల సిట్టమ్మ మీ ముందుకు\nగల గల వచేస్తుంధీ\n\nగజ్జెల సప్పుడు విన్నాడా ఎక్కడికెళ్లా వంటాడు\nడియాలో డియాలా డియా డియా డియాలా\nగాజుల ఊపుడు విన్నాడా ఎవడికి సైగలు అంటాడు\nడియాలో డియాలా డియా డియా డియాలా\nపక్కింటోడికి పొలమారింద నువ్వే తలిసినవంటాడు\nడియాలో డియాలా\nపొరుగింటాడికి జ్వరమొచ్చిందా నీ పై దిగులని అంటాడు\nడియాలో డియాలా\nదోమ కుట్టిందన్నానా ఆడ మగ అంటాడు\nపోనీ సీమ కుట్టిందన్నానా సిన్న పెద్ద అంటాడు\nవాడికి వీడికి లింకులు పెట్టి\nఉన్నది లేనిది రాంకులు కట్టి\nశీలానికి సంకెళ్ళేసి\nసిలకే కొట్టని జామపండు అయ్యాను\n\nఅయ్యో పాపం\n\nపిల్ల నీ బావ నిస్తావా ఒక్కసారి సాటుకెళ్ళి లేటుకొస్తాను\nయాలో ఇయ్యలో\nపిల్ల నీ బావ నిస్తావా\nనా మొగుడికున్న డౌట్ లన్ని రైట్ చేస్తాను\nయాలో ఇయ్యలో\nఆమ్మో నా బావ నిస్తానా\nఅంత గొప్ప లక్ నీకు దక్కనిస్తానా\nఆమ్మో నా బావ నిస్తానా\nవాడికున్న తిక్క నీకు ఎక్కనిస్తానా\n\nఅరె\nజరగండి జరగండి జరగండి\nజరా దూసుకుంటూ ఓచేస్తుంది\nదుబాయ్ సత్యవతేఈ\n\nదుడ్డు కావాలన్నాడు దుబాయ్ నన్ను పంపాడు\nడియాలో డియాలా డియా డియా డియాలా\nఫ్రిడ్జ్ టీవీ కొంటానే పైసల్ పంపి మన్నాడు\nడియాలో డియాలా డియా డియా డియాలా\nసోఫా సెట్ కొంటానే సొమ్ములు పంపి మన్నాడు\nడియాలో డియాలా\nడబల్ కోట్ కొంటానే డబ్బులు పంపి మన్నాడు\nడియాలో డియాలా\nఈయన్ని పెట్టాలంటే ఇల్ల్లు కావాలన్నాడు\nఈస్ట్ పేస్ లో కొంటానే ఇంకా పంపి మన్నాడు\nసాలిడ్ గ సెట్టేలయ్యామంటూ\nబోలెడు ఆశ తో ఫ్లయిట్ దిగితే\nఈస్ట్ పేస్ ఇంటి లో న\nడబల్ కోట్ బెడ్ పైన\nసెకండ్ సెట్ అప్ చూసి నేను అప్సెట్ అయ్యాను\n\nతుస్\n\nపిల్ల నీ బావ నిస్తావా\nఅప్పు కట్టి సెట్టు చేసి తీసుకొస్తాను\nయాలో ఇయ్యలో\nఈ\nపిల్ల నీ బావ నిస్తావా\nదుబాయ్ సేంట్ బుడ్డి లోన\nముంచుకొస్తాను\nయాలో ఇయ్యలో\n\nఅరె ఆమ్మో నా బావ నిస్తానా\nఆయిల్ బావి లో న దూకానిస్తానా\nఆమ్మో నా బావ నిస్తానా\nవీడి చేట్టు నీకు అంటనిస్తానా\n\nఒరే ఒరే ఒరే ఒరే\nఈ ముగ్గురి కథలైతే\nనాకు తెల్సు కానీ\nఇదెవరో కొత్త బండి ర బాబు\nరయ్యు మంటూ గుద్దుకుంటూ వచ్చేతోంది\n\nఇలియానా కె ఈర్ష పుట్టే నడుమే నాదని అన్నాడు\nడియాలో డియాలా\nముమైత్ ఖాన్ కె ధమాక్ తిరిగే\nఉడుకె నాదని అన్నాడు\nడియాలో డియాలా\nశ్రేయ కె సేమట్లు పుట్టే సోకె నాదని అన్నాడు\nడియాలో డియాలా\nఅనుష్క నే ఎనక్కి నెట్టే సరుకే నాదని అన్నాడు\nడియాలో డియాలా\nఫ్రంట్ బ్యాక్ చూసాడు మెంటలెక్కి పోయాడు\nఅప్ డౌన్ చూసాడు అప్పడం అయిపోయాడు\nపేస్ చూసి\nహా పేస్ చూసి\nహే పేస్ చూసి\nఫుసే అయిపోయి\nపార్ట్ లు మొత్తం లూస్ అయిపోయి\nపాపా కి నేను సరిపోనంటు\nపారిపోయాడు\n\nఅబ్బో అంత గొప్ప పేస్ ఆ\nజరా మాక్కూడా సొప్పించ రాదే\n\nపిల్ల నీ బావ నిస్తావా కంటి సూపు తో నే సప్పరిస్తాను\nయాలో ఇయ్యలో\nహే పిల్ల నీ బావ నిస్తావా\nనోటి మాట తో నే నంజు కుంటాను\nయాలో ఇయ్యలో\nఓకే నా బావ నిస్తాను\nజూనియర్ షారుఖ్ ని జంట చేస్తాను\nనీకే నా బావ నిస్తాను\nఇంత కంటే అంధ గాడు లేదంటను\n\nపిల్ల నీ బావ నివ్వకు\nనమ్ముకున్న తోడునెపుడు\nవీడ నివ్వక\nయాలో ఇయ్యలో\nపిల్ల నీ బావ నివ్వకు\nజీవితాన్ని మోడు లాగా మారానివ్వకు\nయాలో ఇయ్యలో"
+  },
+  {
+    "id": "16",
+    "title": "Its Time To Party",
+    "movie": "Attharintiki Dharedhi",
+    "music": "Devi Sri Prasad",
+    "lyricist": "Ramajogayya Sastry",
+    "singers": "S Sowmya, Malgudi Subha",
+    "extra": [],
+    "lyrics": "ఓరి దేవుడో దేవుడో ఎం పిల్లగాడే\nమిల్లీమీటరైనా వదలకుండా\nదిల్ లో నిండినాడే\nహ కళ్ళలోన కత్తులున్న తీవ్రవాదిలా\nమాటల్లోనా మత్తులున్న మంత్రవాదిలా\nపారేశాను చేస్తున్నాడిలా\nపట్టుకో ఆ పట్టుకో\n\nహే ఇట్స్ టైం టూ పార్టీ నౌ\nఇట్స్ టైం టూ పార్టీ నౌ\n\nనోటికొచ్చిన పాటేదో\nపాడేయ్ పాడేయ్ పాడేయ్\nవంటికొచ్చిన డాన్స్ ఏదో\nచేసేయ్ చేసేయ్ చేసేయ్రో\n\nఇట్స్ టైం టూ పార్టీ ఇట్స్ టైం టూ పార్టీ\n\nచేతికందిన డ్రింకేదో\nతాగేయ్ తాగేయ్ తాగేయ్\nలోకమంతా ఉయ్యాలే\nఊగేయ్ ఊగేయ్ ఊగేయ్రో\n\nఇట్స్ టైం టూ పార్టీ ఇట్స్ టైం టూ పార్టీ\n\nకం ఆన్ కం ఆన్\nలెట్స్ ఛిల్ల్ ఇట్ థ్రిల్ ఇట్ కిల్ ఇట్ ర\nకామన్ కామన్\nపిచ్చేక్కిన్చేద్దాంరో\n\nకామన్ కామన్\nలెట్స్ రాక్ ఇట్ షేక్ ఇట్ బ్రేక్ ఇట్ ర\nకామన్ కామన్\nఇక జల్సా చెద్దాంరో\n\nఇట్స్ టైం టూ పార్టీ నౌ\nఇట్స్ టైం టూ పార్టీ రావే ఓ పిల్లా\nఇట్స్ టైం టూ పార్టీ నౌ చేద్దాం గోలా\nఇట్స్ టైం టూ పార్టీ నౌ రావే ఓ పిల్లా\nమనకంటే గొప్పోల్లా టాటా బిర్లా\n\nఓరి దేవుడో దేవుడో ఎం పిల్లగాడే\nమిల్లీమీటరైనా వదలకుండా\nదిల్ లో నిండినాడే\nహ కళ్ళలోన కత్తులున్న తీవ్రవాదిలా\nమాటల్లోనా మత్తులున్న మంత్రవాదిలా\nపారేశాను చేస్తున్నాడిలా\nపట్టుకో ఆ పట్టుకో\n\nఎడిసన్ బల్బ్ లోని ఫిలమెంట్ వైర్ నేను\nఅట్టా నను టచ్ చేసావో\nఇట్టా స్విచ్ ఆన్ అవుతాను\n\nఇట్స్ టైం టూ పార్టీ ఇట్స్ టైం టూ పార్టీ\n\nహే మైక్రోవేవ్ మంట లాగ సైలెంట్ ఫైర్ నేను\nనువ్వు కొంచెం మానసిచ్చావో టాలెంట్ చూపిస్తాను\n\nఇట్స్ టైం టూ పార్టీ ఇట్స్ టైం టూ పార్టీ\n\nహే బాయ్ అబ్బాయ్ లవ్\nకోడ్ కు నువ్వు క్లోఅనింగా\nఅమ్మోయ్ అమ్మాయి తొలి\nచూపుకే ఇంతటి ఫాల్లోవింగా\n\nఇట్స్ టైం టూ పార్టీ నౌ రావే ఓ పిల్లా\nఇట్స్ టైం టూ పార్టీ నౌ చేద్దాం గోలా\n\nమై నేమ్ ఐస్ మార్గరీట\nమోక్టైల్ లా పుట్టానంట\nచూపుల్తో అందమంతా\nసరదాగా సెట్చేయమంతా\n\nఇట్స్ టైం టూ పార్టీ ఇట్స్ టైం టూ పార్టీ\n\nవాచ్మాన్ లేని చోట\nవయసేమో పూల తోట\nవెల్కమ్ అని పిలిచావంటే\nతుమ్మెదలా వాలిపోతా\n\nఇట్స్ టైం టూ పార్టీ ఇట్స్ టైం టూ పార్టీ\n\nహలో హలో అని పిలవాలా నిను పేరెట్టి\nపిల్లో పిల్లో నను లాగొద్దట్టా దారం కట్టి\n\nఇట్స్ టైం టూ పార్టీ నౌ\nఇట్స్ టైం టూ పార్టీ నౌ రావే ఓ పిల్లా\nఇట్స్ టైం టూ పార్టీ నౌ చేద్దాం గోలా\nఇట్స్ టైం టూ పార్టీ\nఇట్స్ టైం టూ పార్టీ\nఇట్స్ టైం టూ పార్టీ"
+  },
+  {
+    "id": "17",
+    "title": "Chamaku Chamaku Cham",
+    "movie": "Kondaveeti Donga (1990)",
+    "music": "Ilayaraja",
+    "lyricist": "Veturi",
+    "singers": "Balu, Chitra",
+    "extra": [],
+    "lyrics": "పల్లవి:\n చిక్ చిక్ చిక్ చిక్... చిక్ చిక్\n అరె చమకు చమకు చాం\nచుట్టుకో చుట్టుకో\nచాన్సు దొరికెరో హొయ్య\nజనకు జనకు చాం\nపట్టుకో పట్టుకో\nచంపె దరువులే వెయ్య\n\nహొయ్యారే హొయ్య హొయ్య\nహొయ్ వయ్యారం సయ్యందయ్యా\nహొయ్యారే హొయ్య హొయ్య\nహొయ్ అయ్యారే తస్సాదియ్యా\n\nచాం చాం చకచాం చకచాం చాం\nత్వరగా ఇచ్చేయ్ నీ లంచం\nచాం చాం చకచాం చకచాం చాం\nచొరవే చేసెయ్ మరి కొంచెం\n\nఅరె చమకు చమకు చాం\nచుట్టుకో చుట్టుకో\nచాన్సు దొరికెరో హొయ్య\nహే.. చనకు చనకు చాం\nపట్టుకో పట్టుకో\nచంపె దరువులే వెయ్య\n\nచరణం 1:\n\nనాగ స్వరములా లాగిందయ్యా తీగ సొగసు చూడయ్యా\nకాగు పొగరుతో రేగిందయ్యా కోడె పడగ కాటెయ్యా\nమైకం పుట్టే రాగం వింటూ సాగేదెట్టాగయ్యా\nమంత్రం వేస్తే కస్సు బుస్సు ఇట్టే ఆగాలయ్యా\nబంధం వేస్తావా అల్లే అందంతో\nపందెం వేస్తావా తుళ్ళే పంతంతో\nఅరె కైపే రేపే కాటే వేస్తా ఖరారుగా\nకథ ముదరగ..\n\nఅరె చమకు చమకు చాం\nచుట్టుకో చుట్టుకో\nచాన్సు దొరికెరో హొయ్య\nహే.. చనకు చనకు చాం\nపట్టుకో పట్టుకో\nచంపె దరువులే వెయ్య\n\nచరణం 2:\nఅగ్గి జల్లులా కురిసే వయసే నెగ్గలేకపోతున్నా\nఈత ముల్లులా యదలో దిగెరో జాతి వన్నెదీ జాణ\nఅంతో ఇంతో సాయం చెయ్య చెయ్యందియ్యాలయ్యా\nతియ్యని గాయం మాయం చేసే మార్గం చూడాలమ్మా\nరాజీకొస్తాలే కాగే కౌగిళ్ళో\nరాజ్యం ఇస్తాలే నీకే నా ఒళ్ళో\nఇక రేపోమాపో ఆపే\nఊపే హుషారుగా\nపదపదమని..\n\nఅరె చమకు చమకు చాం\nచుట్టుకో చుట్టుకో\nచాన్సు దొరికెరో హొయ్య\nజనకు జనకు చాం\nపట్టుకో పట్టుకో\nచంపె దరువులే వెయ్య\n\nహొయ్యారే హొయ్య హొయ్య\nహొయ్ వయ్యారం సయ్యందయ్యా\nహొయ్యారే హొయ్య హొయ్య\nహొయ్ అయ్యారే తస్సాదియ్యా\nఅరె చమకు చమకు చాం\nచుట్టుకో చుట్టుకో\nచాన్సు దొరికెరో హొయ్య\nహే.. చనకు చనకు చాం\nపట్టుకో పట్టుకో\nచంపె దరువులే వెయ్య"
+  }
+];
+
+/* ============================================================
+   ACTIVE SONGS (computed from defaults + user changes)
+   ============================================================ */
+let songsData = [];
+
+/* ============================================================
+   SAFE localStorage WRAPPER
+   ============================================================ */
+const store = {
+  get(k,fb){try{const v=localStorage.getItem(k);return v===null?fb:v}catch(e){return fb}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+  getJSON(k,fb){try{return JSON.parse(localStorage.getItem(k))??fb}catch(e){return fb}},
+  setJSON(k,v){this.set(k,JSON.stringify(v))},
+  remove(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+const KEYS = {last:'lastOpenedSong',favs:'favoriteSongs',recent:'recentSongs',font:'lyricsFontSize',theme:'notebookTheme'};
+const MGMT_KEYS = {added:'userAddedSongs',edited:'userEditedSongs',deleted:'deletedSongIds'};
+const MIN_FONT=14, MAX_FONT=30, DEFAULT_FONT=17, MAX_RECENT=8;
+
+/* ============================================================
+   APPLICATION STATE
+   ============================================================ */
+const state = {
+  currentId: null,
+  favorites: new Set(store.getJSON(KEYS.favs,[]).filter(x=>typeof x==='string')),
+  recent: store.getJSON(KEYS.recent,[]).filter(x=>typeof x==='string'),
+  filter:'all', sortAZ:false, query:'', category:''
+};
+const mgmt = {
+  view:'list', editingId:null, searchQuery:'',
+  selectedIds: new Set(),
+  pendingSaveFn: null // for duplicate dialog callback
+};
+let undoData = null;
+let undoTimer = null;
+
+/* ============================================================
+   DOM REFERENCES
+   ============================================================ */
+const $=(id)=>document.getElementById(id);
+const els = {
+  title:$('display-title'), meta:$('display-meta'), lyrics:$('display-lyrics'),
+  list:$('song-index-list'), panel:$('song-index-panel'), backdrop:$('index-backdrop'),
+  toggle:$('index-toggle'), close:$('index-close'), search:$('search-input'),
+  toast:$('toast'), toastMsg:$('toast-msg'), toastAction:$('toast-action'),
+  fav:$('btn-fav'), categorySelect:$('category-select')
+};
+
+/* ============================================================
+   DATA MANAGEMENT — DEFAULT_SONGS + User Changes
+   ============================================================ */
+function isDefaultSong(id) {
+  return DEFAULT_SONGS.some(s => s.id === String(id));
+}
+
+function generateSongId() {
+  return 's' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+}
+
+function getUserAdded() { return store.getJSON(MGMT_KEYS.added, []); }
+function getUserEdited() { return store.getJSON(MGMT_KEYS.edited, {}); }
+function getDeletedIds() { return store.getJSON(MGMT_KEYS.deleted, []); }
+
+function refreshSongsData() {
+  const deleted = new Set(getDeletedIds());
+  const edited = getUserEdited();
+  const added = getUserAdded();
+
+  let songs = DEFAULT_SONGS
+    .filter(s => !deleted.has(s.id))
+    .map(s => {
+      if (edited[s.id]) {
+        const merged = Object.assign({}, s, edited[s.id]);
+        merged.id = s.id; // ID must not change
+        return merged;
+      }
+      return s;
+    });
+
+  songs = songs.concat(added);
+  songsData = songs;
+}
+
+function saveUserAdded(songs) { store.setJSON(MGMT_KEYS.added, songs); }
+function saveUserEdited(edits) { store.setJSON(MGMT_KEYS.edited, edits); }
+function saveDeletedIds(ids) { store.setJSON(MGMT_KEYS.deleted, ids); }
+
+/* ============================================================
+   TOAST (with optional action button)
+   ============================================================ */
+let toastTimer = null;
+function toast(msg, actionLabel, actionFn, duration) {
+  if (!els.toast) return;
+  if (els.toastMsg) els.toastMsg.textContent = msg;
+  if (els.toastAction) {
+    if (actionLabel && actionFn) {
+      els.toastAction.textContent = actionLabel;
+      els.toastAction.hidden = false;
+      els.toastAction.onclick = () => { actionFn(); hideToast(); };
+    } else {
+      els.toastAction.hidden = true;
+      els.toastAction.onclick = null;
+    }
+  }
+  els.toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => hideToast(), duration || 2400);
+}
+function hideToast() {
+  if (els.toast) els.toast.classList.remove('show');
+  if (els.toastAction) { els.toastAction.hidden = true; els.toastAction.onclick = null; }
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function getSong(id) {
+  if (!id) return null;
+  return songsData.find(s => s.id === String(id)) || null;
+}
+function metaFields(song) {
+  const out = [];
+  if (song.movie) out.push(['Movie', song.movie]);
+  if (song.music) out.push(['Music', song.music]);
+  if (song.lyricist) out.push(['Lyricist', song.lyricist]);
+  if (song.singers) out.push(['Singers', song.singers]);
+  if (Array.isArray(song.extra)) song.extra.forEach(p => { if (p.label && p.value) out.push([p.label, p.value]); });
+  return out;
+}
+function searchBlob(song) {
+  return [song.title, song.movie, song.music, song.lyricist, song.singers,
+    ...(song.extra || []).map(e => e.value)].filter(Boolean).join(' ').toLowerCase();
+}
+
+/* ============================================================
+   PREFERENCES
+   ============================================================ */
+function applyFontSize(px) {
+  const s = Math.min(MAX_FONT, Math.max(MIN_FONT, px || DEFAULT_FONT));
+  document.documentElement.style.setProperty('--lyrics-size', s + 'px');
+  store.set(KEYS.font, String(s)); return s;
+}
+function currentFontSize() {
+  const v = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--lyrics-size'), 10);
+  return Number.isFinite(v) ? v : DEFAULT_FONT;
+}
+function applyTheme(theme) {
+  const t = theme === 'dark' ? 'dark' : 'classic';
+  document.documentElement.setAttribute('data-theme', t);
+  const btn = $('theme-toggle');
+  if (btn) { btn.textContent = t === 'dark' ? '☀️' : '🌙'; btn.setAttribute('aria-label', t === 'dark' ? 'Switch to classic notebook mode' : 'Switch to dark reading mode'); }
+  store.set(KEYS.theme, t);
+}
+function loadPreferences() {
+  applyFontSize(parseInt(store.get(KEYS.font, String(DEFAULT_FONT)), 10) || DEFAULT_FONT);
+  applyTheme(store.get(KEYS.theme, 'classic'));
+}
+
+/* ============================================================
+   FAVORITES & RECENTS
+   ============================================================ */
+function isFav(id) { return state.favorites.has(String(id)); }
+function toggleFavorite(id) {
+  const sid = String(id); if (!getSong(sid)) return;
+  if (state.favorites.has(sid)) { state.favorites.delete(sid); toast('Removed from favorites'); }
+  else { state.favorites.add(sid); toast('Added to favorites ★'); }
+  store.setJSON(KEYS.favs, [...state.favorites]);
+  renderSongIndex(); updateFavButton();
+}
+function updateFavButton() {
+  if (!els.fav) return;
+  const on = state.currentId ? isFav(state.currentId) : false;
+  els.fav.textContent = on ? '★ Favorited' : '☆ Favorite';
+  els.fav.setAttribute('aria-pressed', String(on));
+}
+function pushRecent(id) {
+  const sid = String(id);
+  state.recent = [sid, ...state.recent.filter(x => x !== sid)].slice(0, MAX_RECENT);
+  store.setJSON(KEYS.recent, state.recent);
+}
+
+/* ============================================================
+   CATEGORY OPTIONS
+   ============================================================ */
+function buildCategoryOptions() {
+  if (!els.categorySelect) return;
+  const movies=new Set(), singers=new Set(), music=new Set(), lyricists=new Set();
+  songsData.forEach(s => {
+    if (s.movie) movies.add(s.movie);
+    if (s.music) music.add(s.music);
+    if (s.lyricist) lyricists.add(s.lyricist);
+    if (s.singers) s.singers.split(/,\s*/).forEach(x => { const t=x.trim(); if(t) singers.add(t); });
+  });
+  const frag = document.createDocumentFragment();
+  const allOpt = document.createElement('option'); allOpt.value=''; allOpt.textContent='All Categories'; frag.appendChild(allOpt);
+  function addGrp(label, prefix, items) {
+    if (!items.size) return;
+    const g = document.createElement('optgroup'); g.label = label;
+    [...items].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'})).forEach(item => {
+      const o = document.createElement('option'); o.value = prefix+':'+item; o.textContent = item; g.appendChild(o);
+    });
+    frag.appendChild(g);
+  }
+  addGrp('🎬 Movie','movie',movies); addGrp('🎤 Singer','singer',singers);
+  addGrp('🎵 Music Director','music',music); addGrp('✍️ Lyricist','lyricist',lyricists);
+  els.categorySelect.replaceChildren(frag);
+}
+function matchesCategory(song, cat) {
+  if (!cat) return true;
+  const [type,...rest] = cat.split(':'); const val = rest.join(':');
+  switch(type) {
+    case 'movie': return song.movie === val;
+    case 'music': return song.music === val;
+    case 'lyricist': return song.lyricist === val;
+    case 'singer': return song.singers && song.singers.includes(val);
+    default: return true;
+  }
+}
+
+/* ============================================================
+   SONG INDEX RENDERING
+   ============================================================ */
+function visibleSongs() {
+  let list = songsData.slice();
+  if (state.filter === 'fav') list = list.filter(s => isFav(s.id));
+  else if (state.filter === 'recent') list = state.recent.map(getSong).filter(Boolean);
+  if (state.category) list = list.filter(s => matchesCategory(s, state.category));
+  const q = state.query.trim().toLowerCase();
+  if (q) list = list.filter(s => searchBlob(s).includes(q));
+  if (state.sortAZ) list = list.slice().sort((a,b) => a.title.localeCompare(b.title, undefined, {sensitivity:'base'}));
+  return list;
+}
+function renderSongIndex() {
+  if (!els.list) return;
+  const list = visibleSongs();
+  const frag = document.createDocumentFragment();
+  if (list.length === 0) {
+    const li = document.createElement('li'); li.setAttribute('role','option');
+    const p = document.createElement('p'); p.className = 'no-results';
+    p.textContent = state.filter==='fav' ? 'No favorite songs yet — tap ☆ on a song to add one.'
+      : state.filter==='recent' ? 'No recently opened songs yet.'
+      : state.query ? 'No songs found for "'+state.query+'". Try a different search.'
+      : state.category ? 'No songs in this category.' : 'No songs found.';
+    li.appendChild(p); frag.appendChild(li);
+  }
+  list.forEach(song => {
+    const li = document.createElement('li'); li.setAttribute('role','option');
+    const row = document.createElement('div'); row.className='song-row';
+    const btn = document.createElement('button'); btn.type='button'; btn.className='song-btn';
+    btn.id='song-btn-'+song.id; btn.dataset.songId=song.id;
+    if (String(state.currentId)===song.id) btn.setAttribute('aria-current','true');
+    const ts = document.createElement('span'); ts.className='song-btn-title'; ts.textContent=song.title; btn.appendChild(ts);
+    const sub = [song.movie,song.singers].filter(Boolean).join(' · ');
+    if (sub) { const sp = document.createElement('span'); sp.className='sub'; sp.textContent=sub; btn.appendChild(sp); }
+    btn.addEventListener('click', () => { loadSong(song.id); if(window.matchMedia('(max-width:700px)').matches) closeIndex(); });
+    const fb = document.createElement('button'); fb.type='button'; fb.className='fav-btn';
+    fb.textContent = isFav(song.id)?'★':'☆'; fb.setAttribute('aria-pressed',String(isFav(song.id)));
+    fb.setAttribute('aria-label',(isFav(song.id)?'Remove ':'Add ')+song.title+(isFav(song.id)?' from favorites':' to favorites'));
+    fb.addEventListener('click',e=>{e.stopPropagation();toggleFavorite(song.id)});
+    row.appendChild(btn); row.appendChild(fb); li.appendChild(row); frag.appendChild(li);
+  });
+  els.list.replaceChildren(frag);
+}
+function updateActiveSong(songId) {
+  if (!els.list) return;
+  els.list.querySelectorAll('.song-btn').forEach(b => {
+    if(b.dataset.songId===String(songId)) b.setAttribute('aria-current','true'); else b.removeAttribute('aria-current');
+  });
+  const a=$('song-btn-'+songId);
+  if(a&&els.panel&&els.panel.classList.contains('open')) try{a.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}
+}
+
+/* ============================================================
+   SONG DISPLAY
+   ============================================================ */
+function updateSongDisplay(song) {
+  if(!els.title||!els.meta||!els.lyrics) return;
+  els.title.textContent = song.title;
+  const mf = document.createDocumentFragment();
+  metaFields(song).forEach(([l,v]) => {
+    const sp=document.createElement('span'); sp.className='meta-item';
+    const b=document.createElement('b'); b.textContent=l+': '; sp.appendChild(b);
+    sp.appendChild(document.createTextNode(v)); mf.appendChild(sp);
+  });
+  els.meta.replaceChildren(mf);
+  els.lyrics.textContent = song.lyrics;
+  document.title = song.title + ' — నా పాటల పుస్తకం';
+}
+function updateHash(songId) {
+  const t='#song='+songId;
+  if(location.hash!==t) try{history.pushState(null,'',t)}catch(e){try{location.hash=t}catch(e2){}}
+}
+function idFromHash() {
+  try{const m=/^#song=([A-Za-z0-9_-]+)$/.exec(location.hash||'');return m&&getSong(m[1])?m[1]:null}catch(e){return null}
+}
+function initialSongId() {
+  const h=idFromHash(); if(h) return h;
+  const l=store.get(KEYS.last,''); if(l&&getSong(l)) return l;
+  return songsData.length>0?songsData[0].id:null;
+}
+function loadSong(songId, opts) {
+  const o=opts||{};
+  const song=getSong(songId);
+  if(!song){toast('Song not found');return false}
+  state.currentId=song.id;
+  updateSongDisplay(song); updateActiveSong(song.id); updateFavButton();
+  pushRecent(song.id); store.set(KEYS.last,song.id);
+  if(o.updateHash!==false) updateHash(song.id);
+  if(state.filter==='recent') renderSongIndex();
+  if(o.scrollTop!==false){const nb=$('notebook-main');if(nb) try{nb.scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}}
+  return true;
+}
+
+/* ============================================================
+   INDEX OPEN/CLOSE
+   ============================================================ */
+function openIndex() {
+  if(!els.panel) return;
+  els.panel.classList.add('open'); els.panel.setAttribute('aria-hidden','false');
+  if(els.toggle) els.toggle.setAttribute('aria-expanded','true');
+  if(els.backdrop){els.backdrop.hidden=false;requestAnimationFrame(()=>els.backdrop.classList.add('show'))}
+  document.body.classList.add('locked');
+  if(els.search) setTimeout(()=>els.search.focus({preventScroll:true}),50);
+  updateActiveSong(state.currentId);
+}
+function closeIndex() {
+  if(!els.panel||!els.panel.classList.contains('open')) return;
+  els.panel.classList.remove('open'); els.panel.setAttribute('aria-hidden','true');
+  if(els.toggle){els.toggle.setAttribute('aria-expanded','false');els.toggle.focus({preventScroll:true})}
+  if(els.backdrop){els.backdrop.classList.remove('show');setTimeout(()=>{if(els.backdrop&&!els.panel.classList.contains('open'))els.backdrop.hidden=true},260)}
+  document.body.classList.remove('locked');
+}
+function trapFocus(e) {
+  if(!els.panel||!els.panel.classList.contains('open')) return;
+  if(e.key!=='Tab') return;
+  const ff=els.panel.querySelectorAll('button:not([disabled]):not([hidden]),input:not([disabled]),select:not([disabled])');
+  if(!ff.length) return;
+  if(e.shiftKey){if(document.activeElement===ff[0]){e.preventDefault();ff[ff.length-1].focus()}}
+  else{if(document.activeElement===ff[ff.length-1]){e.preventDefault();ff[0].focus()}}
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function songAsText(song) {
+  return [song.title, metaFields(song).map(([l,v])=>l+': '+v).join(' | '), '', song.lyrics].filter(s=>s!==undefined).join('\n');
+}
+async function copyLyrics() {
+  const song=getSong(state.currentId); if(!song){toast('No song selected');return}
+  const text=songAsText(song);
+  try{
+    if(navigator.clipboard&&window.isSecureContext) await navigator.clipboard.writeText(text);
+    else{const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;opacity:0;pointer-events:none';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
+    toast('Lyrics copied! 📋');
+  }catch(e){toast('Copy not supported in this browser')}
+}
+async function shareSong() {
+  const song=getSong(state.currentId); if(!song){toast('No song selected');return}
+  try{if(navigator.share){await navigator.share({title:song.title,text:songAsText(song)});return}}catch(e){if(e&&e.name==='AbortError')return}
+  copyLyrics();
+}
+function randomSong() {
+  if(!songsData.length) return;
+  const pool=songsData.filter(s=>s.id!==state.currentId);
+  const l=pool.length>0?pool:songsData;
+  loadSong(l[Math.floor(Math.random()*l.length)].id);
+  toast('🔀 Random song');
+}
+
+/* ============================================================
+   UPDATE ALL VIEWS (after management operations)
+   ============================================================ */
+function updateAllViews() {
+  refreshSongsData();
+  renderSongIndex();
+  buildCategoryOptions();
+  updateSongCount();
+  // If current song no longer exists, load first available
+  if (state.currentId && !getSong(state.currentId)) {
+    if (songsData.length > 0) loadSong(songsData[0].id);
+    else {
+      if(els.title) els.title.textContent = 'పాటల పుస్తకం';
+      if(els.meta) els.meta.replaceChildren();
+      if(els.lyrics) els.lyrics.textContent = 'No songs available. Add a song to begin.';
+      state.currentId = null;
+    }
+  } else if (state.currentId) {
+    // Refresh display in case song was edited
+    const song = getSong(state.currentId);
+    if (song) updateSongDisplay(song);
+    updateFavButton();
+  }
+  // Clean up favorites and recents
+  state.favorites = new Set([...state.favorites].filter(id => getSong(id)));
+  store.setJSON(KEYS.favs, [...state.favorites]);
+  state.recent = state.recent.filter(id => getSong(id));
+  store.setJSON(KEYS.recent, state.recent);
+}
+function updateSongCount() {
+  const b=$('song-count-badge'); if(b) b.textContent=songsData.length+' Songs';
+}
+
+/* ============================================================
+   SONG MANAGEMENT — OPEN/CLOSE
+   ============================================================ */
+function openSongManager() {
+  const overlay=$('mgmt-overlay'); if(!overlay) return;
+  overlay.hidden = false;
+  document.body.classList.add('locked');
+  mgmt.view='list'; mgmt.editingId=null; mgmt.selectedIds.clear(); mgmt.searchQuery='';
+  showMgmtView('list');
+  renderManagementList();
+  const si=$('mgmt-search'); if(si){si.value='';si.focus({preventScroll:true})}
+}
+function closeSongManager() {
+  const overlay=$('mgmt-overlay'); if(!overlay) return;
+  overlay.hidden = true;
+  document.body.classList.remove('locked');
+  updateAllViews();
+}
+function showMgmtView(name) {
+  mgmt.view = name;
+  ['list','form','preview'].forEach(v => {
+    const el=$('mgmt-view-'+v); if(el) el.hidden = (v!==name);
+  });
+}
+
+/* ============================================================
+   MANAGEMENT LIST
+   ============================================================ */
+function renderManagementList() {
+  const container=$('mgmt-list');
+  const emptyEl=$('mgmt-empty');
+  const noRes=$('mgmt-no-results');
+  if(!container) return;
+
+  let songs = songsData.slice();
+  const q = mgmt.searchQuery.trim().toLowerCase();
+  if(q) songs = songs.filter(s => searchBlob(s).includes(q));
+
+  // Show/hide empties
+  if(songsData.length===0 && !q) {
+    container.replaceChildren(); if(emptyEl) emptyEl.hidden=false; if(noRes) noRes.hidden=true;
+    updateBulkBar(); return;
+  }
+  if(songs.length===0 && q) {
+    container.replaceChildren(); if(emptyEl) emptyEl.hidden=true; if(noRes) noRes.hidden=false;
+    updateBulkBar(); return;
+  }
+  if(emptyEl) emptyEl.hidden=true;
+  if(noRes) noRes.hidden=true;
+
+  const frag = document.createDocumentFragment();
+  songs.forEach(song => {
+    const card = document.createElement('div'); card.className='mgmt-card';
+    // Checkbox
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=mgmt.selectedIds.has(song.id);
+    cb.setAttribute('aria-label','Select '+song.title);
+    cb.addEventListener('change',()=>{
+      if(cb.checked) mgmt.selectedIds.add(song.id); else mgmt.selectedIds.delete(song.id);
+      updateBulkBar();
+    });
+    card.appendChild(cb);
+    // Info
+    const info = document.createElement('div'); info.className='mgmt-card-info';
+    const t = document.createElement('div'); t.className='mgmt-card-title'; t.textContent=song.title; info.appendChild(t);
+    const meta = [song.movie, song.music?'Music: '+song.music:null, song.singers].filter(Boolean).join(' · ');
+    if(meta){const m=document.createElement('div');m.className='mgmt-card-meta';m.textContent=meta;info.appendChild(m)}
+    if(!isDefaultSong(song.id)){const badge=document.createElement('span');badge.className='mgmt-card-badge';badge.textContent='User Added';info.appendChild(badge)}
+    else {
+      const edited = getUserEdited();
+      if(edited[song.id]){const badge=document.createElement('span');badge.className='mgmt-card-badge';badge.textContent='Edited';info.appendChild(badge)}
+    }
+    card.appendChild(info);
+    // Actions
+    const acts = document.createElement('div'); acts.className='mgmt-card-actions';
+    const editBtn = document.createElement('button'); editBtn.type='button'; editBtn.className='btn ghost';
+    editBtn.textContent='✏️ Edit'; editBtn.style.cssText='min-height:36px;font-size:12px';
+    editBtn.addEventListener('click',()=>openEditSongForm(song.id));
+    const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.className='btn ghost';
+    delBtn.textContent='🗑️'; delBtn.style.cssText='min-height:36px;font-size:12px;color:var(--danger)';
+    delBtn.setAttribute('aria-label','Delete '+song.title);
+    delBtn.addEventListener('click',()=>showDeleteConfirm(song.id));
+    acts.appendChild(editBtn); acts.appendChild(delBtn);
+    card.appendChild(acts);
+    frag.appendChild(card);
+  });
+  container.replaceChildren(frag);
+  updateBulkBar();
+}
+function updateBulkBar() {
+  const bar=$('mgmt-bulk-bar'); if(!bar) return;
+  const count=mgmt.selectedIds.size;
+  bar.hidden = count===0;
+  const ct=$('mgmt-selected-count'); if(ct) ct.textContent=count+' selected';
+}
+
+/* ============================================================
+   ADD/EDIT FORM
+   ============================================================ */
+function openAddSongForm() {
+  mgmt.editingId = null;
+  const ft=$('mgmt-form-title'); if(ft) ft.textContent='Add New Song';
+  clearForm(); showMgmtView('form');
+  const ti=$('mgmt-f-title'); if(ti) ti.focus({preventScroll:true});
+}
+function openEditSongForm(songId) {
+  const song = getSong(songId); if(!song) {toast('Song not found');return}
+  mgmt.editingId = songId;
+  const ft=$('mgmt-form-title'); if(ft) ft.textContent='Edit Song';
+  clearForm();
+  // Fill form with song data
+  setVal('mgmt-f-title', song.title||'');
+  setVal('mgmt-f-movie', song.movie||'');
+  setVal('mgmt-f-music', song.music||'');
+  setVal('mgmt-f-lyricist', song.lyricist||'');
+  setVal('mgmt-f-singers', song.singers||'');
+  setVal('mgmt-f-lyrics', song.lyrics||'');
+  if(song.extra&&song.extra.length>0){
+    setVal('mgmt-f-extra-label', song.extra[0].label||'');
+    setVal('mgmt-f-extra-value', song.extra[0].value||'');
+  }
+  showMgmtView('form');
+}
+function setVal(id,v){const el=$(id);if(el) el.value=v}
+function getVal(id){const el=$(id);return el?el.value:''}
+function clearForm() {
+  ['mgmt-f-title','mgmt-f-movie','mgmt-f-music','mgmt-f-lyricist','mgmt-f-singers','mgmt-f-extra-label','mgmt-f-extra-value','mgmt-f-lyrics'].forEach(id=>setVal(id,''));
+  clearFormErrors();
+}
+function clearFormErrors() {
+  ['err-title','err-lyrics'].forEach(id=>{const e=$(id);if(e) e.textContent=''});
+  ['fg-title','fg-lyrics'].forEach(id=>{const e=$(id);if(e) e.classList.remove('has-error')});
+}
+
+function getFormData() {
+  const extra = [];
+  const el = getVal('mgmt-f-extra-label').trim();
+  const ev = getVal('mgmt-f-extra-value').trim();
+  if (el && ev) extra.push({label:el, value:ev});
+  return {
+    title: getVal('mgmt-f-title').trim(),
+    movie: getVal('mgmt-f-movie').trim(),
+    music: getVal('mgmt-f-music').trim(),
+    lyricist: getVal('mgmt-f-lyricist').trim(),
+    singers: getVal('mgmt-f-singers').trim(),
+    extra: extra,
+    lyrics: getVal('mgmt-f-lyrics').replace(/^\s+/, '').replace(/\s+$/, '') // trim outer, preserve internal
+  };
+}
+
+function validateForm(data) {
+  clearFormErrors(); let valid = true;
+  if (!data.title) {
+    showFieldError('fg-title','err-title','Song title is required.'); valid=false;
+  }
+  if (!data.lyrics) {
+    showFieldError('fg-lyrics','err-lyrics','Lyrics cannot be empty.'); valid=false;
+  }
+  if (!valid) {
+    // Focus first invalid field
+    if(!data.title){const el=$('mgmt-f-title');if(el)el.focus()}
+    else if(!data.lyrics){const el=$('mgmt-f-lyrics');if(el)el.focus()}
+  }
+  return valid;
+}
+function showFieldError(groupId, errorId, msg) {
+  const g=$(groupId); if(g) g.classList.add('has-error');
+  const e=$(errorId); if(e) e.textContent=msg;
+}
+
+function checkDuplicateTitle(title, excludeId) {
+  const t = title.toLowerCase().trim();
+  return songsData.some(s => s.title.toLowerCase().trim()===t && s.id!==excludeId);
+}
+
+/* ============================================================
+   PREVIEW
+   ============================================================ */
+function showSongPreview(data) {
+  const pt=$('preview-title'), pm=$('preview-meta'), pl=$('preview-lyrics');
+  if(!pt||!pm||!pl) return;
+  pt.textContent = data.title;
+  const mf = document.createDocumentFragment();
+  const fields = [];
+  if(data.movie) fields.push(['Movie',data.movie]);
+  if(data.music) fields.push(['Music',data.music]);
+  if(data.lyricist) fields.push(['Lyricist',data.lyricist]);
+  if(data.singers) fields.push(['Singers',data.singers]);
+  if(data.extra) data.extra.forEach(e=>{if(e.label&&e.value) fields.push([e.label,e.value])});
+  fields.forEach(([l,v])=>{
+    const sp=document.createElement('span');sp.className='meta-item';
+    const b=document.createElement('b');b.textContent=l+': ';sp.appendChild(b);
+    sp.appendChild(document.createTextNode(v));mf.appendChild(sp);
+  });
+  pm.replaceChildren(mf);
+  pl.textContent = data.lyrics;
+  showMgmtView('preview');
+}
+
+/* ============================================================
+   SAVE SONG
+   ============================================================ */
+function saveSong(forceDuplicate) {
+  const data = getFormData();
+  if (!validateForm(data)) return;
+
+  // Duplicate check
+  if (!forceDuplicate && checkDuplicateTitle(data.title, mgmt.editingId)) {
+    mgmt.pendingSaveFn = () => saveSong(true);
+    const dn=$('dlg-dup-name'); if(dn) dn.textContent='"'+data.title+'"';
+    showDialog('dlg-duplicate');
+    return;
+  }
+
+  if (mgmt.editingId) {
+    // === EDIT MODE ===
+    const sid = mgmt.editingId;
+    if (isDefaultSong(sid)) {
+      // Edit a default song: store diff in userEdited
+      const edits = getUserEdited();
+      edits[sid] = {title:data.title,movie:data.movie,music:data.music,lyricist:data.lyricist,singers:data.singers,extra:data.extra,lyrics:data.lyrics};
+      saveUserEdited(edits);
+    } else {
+      // Edit a user-added song: update in-place
+      const added = getUserAdded();
+      const idx = added.findIndex(s => s.id===sid);
+      if (idx>=0) {
+        added[idx] = Object.assign({}, added[idx], data);
+        saveUserAdded(added);
+      }
+    }
+    refreshSongsData();
+    toast('✓ Song updated successfully!');
+  } else {
+    // === ADD MODE ===
+    const newSong = {
+      id: generateSongId(),
+      title: data.title,
+      movie: data.movie,
+      music: data.music,
+      lyricist: data.lyricist,
+      singers: data.singers,
+      extra: data.extra,
+      lyrics: data.lyrics,
+      _userAdded: true
+    };
+    const added = getUserAdded();
+    added.push(newSong);
+    saveUserAdded(added);
+    refreshSongsData();
+    // Load the new song
+    loadSong(newSong.id);
+    toast('✓ Song added successfully!');
+  }
+
+  showMgmtView('list');
+  renderManagementList();
+  updateAllViews();
+}
+
+/* ============================================================
+   DELETE SONG
+   ============================================================ */
+let pendingDeleteId = null;
+
+function showDeleteConfirm(songId) {
+  const song = getSong(songId); if(!song) return;
+  pendingDeleteId = songId;
+  const dn=$('dlg-delete-name'); if(dn) dn.textContent='"'+song.title+'"';
+  showDialog('dlg-delete');
+}
+
+function performDelete(songId) {
+  const song = getSong(songId); if(!song) return;
+  // Save for undo
+  const wasDefault = isDefaultSong(songId);
+  const wasFav = isFav(songId);
+  const undoInfo = {song:Object.assign({},song), wasDefault, wasFav};
+
+  if (wasDefault) {
+    const ids = getDeletedIds(); ids.push(songId); saveDeletedIds(ids);
+  } else {
+    const added = getUserAdded().filter(s => s.id!==songId); saveUserAdded(added);
+  }
+
+  // Remove from favorites
+  state.favorites.delete(songId);
+  store.setJSON(KEYS.favs, [...state.favorites]);
+  // Remove from recents
+  state.recent = state.recent.filter(id => id!==songId);
+  store.setJSON(KEYS.recent, state.recent);
+
+  refreshSongsData();
+  renderManagementList();
+  mgmt.selectedIds.delete(songId);
+  updateBulkBar();
+
+  // Setup undo
+  setupUndo(undoInfo);
+}
+
+function setupUndo(info) {
+  clearTimeout(undoTimer);
+  undoData = info;
+  toast('Song deleted.', 'UNDO', performUndo, 8000);
+  undoTimer = setTimeout(() => { undoData = null; }, 8500);
+}
+
+function performUndo() {
+  if (!undoData) return;
+  const info = undoData;
+  undoData = null; clearTimeout(undoTimer);
+
+  if (info.wasDefault) {
+    // Remove from deleted list
+    const ids = getDeletedIds().filter(id => id!==info.song.id);
+    saveDeletedIds(ids);
+  } else {
+    // Re-add to user added
+    const added = getUserAdded();
+    added.push(info.song);
+    saveUserAdded(added);
+  }
+  // Restore favorite
+  if (info.wasFav) { state.favorites.add(info.song.id); store.setJSON(KEYS.favs,[...state.favorites]); }
+
+  refreshSongsData();
+  renderManagementList();
+  toast('Song restored ✓');
+}
+
+/* BULK DELETE */
+function showBulkDeleteConfirm() {
+  const count = mgmt.selectedIds.size; if(!count) return;
+  const msg=$('dlg-bulk-msg'); if(msg) msg.textContent='You are about to delete '+count+' song'+(count>1?'s':'')+'.';
+  showDialog('dlg-bulk-delete');
+}
+function performBulkDelete() {
+  const ids = [...mgmt.selectedIds];
+  const deletedDefault = getDeletedIds();
+  const addedSongs = getUserAdded();
+  let removedAdded = [];
+
+  ids.forEach(id => {
+    if(isDefaultSong(id)) { deletedDefault.push(id); }
+    else { removedAdded.push(id); }
+    state.favorites.delete(id);
+    state.recent = state.recent.filter(r => r!==id);
+  });
+
+  saveDeletedIds(deletedDefault);
+  saveUserAdded(addedSongs.filter(s => !removedAdded.includes(s.id)));
+  store.setJSON(KEYS.favs,[...state.favorites]);
+  store.setJSON(KEYS.recent, state.recent);
+
+  mgmt.selectedIds.clear();
+  refreshSongsData();
+  renderManagementList();
+  toast('✓ '+ids.length+' song'+(ids.length>1?'s':'')+' deleted.');
+}
+
+/* ============================================================
+   EXPORT / IMPORT
+   ============================================================ */
+function exportSongData() {
+  const data = {
+    version: 1,
+    exportDate: new Date().toISOString(),
+    addedSongs: getUserAdded(),
+    editedSongs: getUserEdited(),
+    deletedSongIds: getDeletedIds(),
+    favorites: [...state.favorites],
+    recentSongs: state.recent,
+    preferences: {
+      fontSize: store.get(KEYS.font, String(DEFAULT_FONT)),
+      theme: store.get(KEYS.theme, 'classic')
+    }
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Telugu-Songs-Backup.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},100);
+  toast('📥 Backup exported!');
+}
+
+function triggerImport() {
+  const fi=$('mgmt-import-file'); if(fi){fi.value='';fi.click()}
+}
+
+function handleImportFile(file) {
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || typeof data !== 'object' || data.version === undefined) {
+        toast('The selected file is not a valid Telugu Songs backup file.');
+        return;
+      }
+      showImportSummary(data);
+    } catch(err) {
+      toast('Invalid file format. Please select a valid JSON backup.');
+    }
+  };
+  reader.onerror = () => toast('Error reading file.');
+  reader.readAsText(file);
+}
+
+let pendingImportData = null;
+function showImportSummary(data) {
+  pendingImportData = data;
+  const dl=$('dlg-import-summary'); if(!dl) return;
+  dl.replaceChildren();
+  function addItem(label, value) {
+    const dt=document.createElement('dt');dt.textContent=label;
+    const dd=document.createElement('dd');dd.textContent=value;
+    dl.appendChild(dt);dl.appendChild(dd);
+  }
+  addItem('New Songs', (data.addedSongs||[]).length);
+  addItem('Edited Songs', Object.keys(data.editedSongs||{}).length);
+  addItem('Deleted Songs', (data.deletedSongIds||[]).length);
+  addItem('Favorites', (data.favorites||[]).length);
+  if(data.exportDate) addItem('Export Date', new Date(data.exportDate).toLocaleDateString());
+  showDialog('dlg-import');
+}
+
+function performImport() {
+  if(!pendingImportData) return;
+  const data = pendingImportData; pendingImportData = null;
+
+  if(Array.isArray(data.addedSongs)) saveUserAdded(data.addedSongs);
+  if(data.editedSongs && typeof data.editedSongs==='object') saveUserEdited(data.editedSongs);
+  if(Array.isArray(data.deletedSongIds)) saveDeletedIds(data.deletedSongIds);
+  if(Array.isArray(data.favorites)) {
+    state.favorites = new Set(data.favorites.filter(x=>typeof x==='string'));
+    store.setJSON(KEYS.favs,[...state.favorites]);
+  }
+  if(Array.isArray(data.recentSongs)) {
+    state.recent = data.recentSongs.filter(x=>typeof x==='string');
+    store.setJSON(KEYS.recent,state.recent);
+  }
+  if(data.preferences) {
+    if(data.preferences.fontSize) store.set(KEYS.font,data.preferences.fontSize);
+    if(data.preferences.theme) store.set(KEYS.theme,data.preferences.theme);
+    loadPreferences();
+  }
+
+  refreshSongsData();
+  renderManagementList();
+  hideDialog('dlg-import');
+  toast('✓ Data imported successfully!');
+}
+
+/* ============================================================
+   RESTORE DEFAULTS
+   ============================================================ */
+function showRestoreConfirm() { showDialog('dlg-restore'); }
+function performRestore() {
+  store.remove(MGMT_KEYS.added);
+  store.remove(MGMT_KEYS.edited);
+  store.remove(MGMT_KEYS.deleted);
+  refreshSongsData();
+  renderManagementList();
+  hideDialog('dlg-restore');
+  toast('✓ Default songs restored!');
+}
+
+/* ============================================================
+   DIALOG HELPERS
+   ============================================================ */
+function showDialog(id) { const d=$(id); if(d) d.hidden=false; }
+function hideDialog(id) { const d=$(id); if(d) d.hidden=true; }
+
+/* ============================================================
+   EVENT WIRING
+   ============================================================ */
+function initializeApp() {
+  if(!Array.isArray(DEFAULT_SONGS)||DEFAULT_SONGS.length===0){
+    if(els.lyrics) els.lyrics.textContent='No default songs available.'; return;
+  }
+  refreshSongsData();
+  loadPreferences();
+  updateSongCount();
+  buildCategoryOptions();
+  renderSongIndex();
+
+  const firstId=initialSongId();
+  if(firstId) loadSong(firstId,{updateHash:false,scrollTop:false});
+
+  // Index toggle
+  if(els.toggle) els.toggle.addEventListener('click',()=>{els.panel&&els.panel.classList.contains('open')?closeIndex():openIndex()});
+  if(els.close) els.close.addEventListener('click',closeIndex);
+  if(els.backdrop) els.backdrop.addEventListener('click',closeIndex);
+  document.addEventListener('keydown',e=>{
+    // Close dialogs on Escape
+    if(e.key==='Escape'){
+      const dialogs=['dlg-delete','dlg-bulk-delete','dlg-duplicate','dlg-restore','dlg-import'];
+      for(const did of dialogs){const d=$(did);if(d&&!d.hidden){d.hidden=true;return}}
+      const mo=$('mgmt-overlay'); if(mo&&!mo.hidden){
+        if(mgmt.view!=='list'){showMgmtView('list');renderManagementList();return}
+        closeSongManager();return;
+      }
+      if(els.panel&&els.panel.classList.contains('open')){closeIndex();return}
+    }
+    trapFocus(e);
+  });
+
+  // Search
+  if(els.search) els.search.addEventListener('input',()=>{state.query=els.search.value;renderSongIndex()});
+  const cb=$('search-clear');
+  if(cb) cb.addEventListener('click',()=>{state.query='';if(els.search){els.search.value='';els.search.focus()}renderSongIndex()});
+
+  // Filters
+  document.querySelectorAll('.chip[data-filter]').forEach(chip=>{
+    chip.addEventListener('click',()=>{state.filter=chip.dataset.filter;document.querySelectorAll('.chip[data-filter]').forEach(c=>c.setAttribute('aria-pressed',String(c===chip)));renderSongIndex()});
+  });
+  const sb=$('sort-toggle');
+  if(sb) sb.addEventListener('click',()=>{state.sortAZ=!state.sortAZ;sb.setAttribute('aria-pressed',String(state.sortAZ));sb.textContent=state.sortAZ?'A–Z ✓':'A–Z';renderSongIndex()});
+  if(els.categorySelect) els.categorySelect.addEventListener('change',()=>{state.category=els.categorySelect.value;renderSongIndex()});
+
+  // Toolbar
+  const on=(id,fn)=>{const e=$(id);if(e)e.addEventListener('click',fn)};
+  on('btn-random',randomSong); on('btn-copy',copyLyrics); on('btn-share',shareSong);
+  on('btn-print',()=>{try{window.print()}catch(e){toast('Print not available')}});
+  on('btn-fav',()=>{if(state.currentId)toggleFavorite(state.currentId)});
+  on('font-inc',()=>applyFontSize(currentFontSize()+1));
+  on('font-dec',()=>applyFontSize(currentFontSize()-1));
+  on('font-reset',()=>applyFontSize(DEFAULT_FONT));
+  on('theme-toggle',()=>{applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'classic':'dark')});
+
+  // Back/forward
+  window.addEventListener('popstate',()=>{const id=idFromHash();if(id)loadSong(id,{updateHash:false})});
+  window.addEventListener('hashchange',()=>{const id=idFromHash();if(id&&id!==state.currentId)loadSong(id,{updateHash:false})});
+
+  /* ============ MANAGEMENT WIRING ============ */
+  on('mgmt-open-btn', openSongManager);
+  on('mgmt-close', closeSongManager);
+  on('mgmt-add-btn', openAddSongForm);
+  on('mgmt-empty-add', openAddSongForm);
+
+  // Management search
+  const ms=$('mgmt-search');
+  if(ms) ms.addEventListener('input',()=>{mgmt.searchQuery=ms.value;renderManagementList()});
+
+  // Form buttons
+  on('mgmt-cancel-btn',()=>{showMgmtView('list');renderManagementList()});
+  on('mgmt-preview-btn',()=>{const d=getFormData();if(validateForm(d))showSongPreview(d)});
+  on('mgmt-save-btn',()=>saveSong(false));
+  on('mgmt-back-edit',()=>showMgmtView('form'));
+  on('mgmt-save-preview',()=>saveSong(false));
+
+  // Export/Import/Restore
+  on('mgmt-export-btn', exportSongData);
+  on('mgmt-import-btn', triggerImport);
+  on('mgmt-restore-btn', showRestoreConfirm);
+  const fi=$('mgmt-import-file');
+  if(fi) fi.addEventListener('change',e=>{if(e.target.files&&e.target.files[0])handleImportFile(e.target.files[0])});
+
+  // Bulk delete
+  on('mgmt-bulk-delete', showBulkDeleteConfirm);
+
+  // Delete dialog
+  on('dlg-delete-cancel',()=>hideDialog('dlg-delete'));
+  on('dlg-delete-confirm',()=>{hideDialog('dlg-delete');if(pendingDeleteId)performDelete(pendingDeleteId);pendingDeleteId=null});
+
+  // Bulk delete dialog
+  on('dlg-bulk-cancel',()=>hideDialog('dlg-bulk-delete'));
+  on('dlg-bulk-confirm',()=>{hideDialog('dlg-bulk-delete');performBulkDelete()});
+
+  // Duplicate dialog
+  on('dlg-dup-back',()=>hideDialog('dlg-duplicate'));
+  on('dlg-dup-save',()=>{hideDialog('dlg-duplicate');if(mgmt.pendingSaveFn){mgmt.pendingSaveFn();mgmt.pendingSaveFn=null}});
+
+  // Restore dialog
+  on('dlg-restore-cancel',()=>hideDialog('dlg-restore'));
+  on('dlg-restore-export',()=>{exportSongData()});
+  on('dlg-restore-confirm',()=>performRestore());
+
+  // Import dialog
+  on('dlg-import-cancel',()=>{hideDialog('dlg-import');pendingImportData=null});
+  on('dlg-import-export',()=>exportSongData());
+  on('dlg-import-confirm',()=>performImport());
+}
+
+/* ============================================================
+   START APPLICATION
+   ============================================================ */
+try { initializeApp(); }
+catch(err) {
+  console.error('Notebook init error:', err);
+  const le=$('display-lyrics');
+  if(le) le.textContent='Something went wrong while starting the notebook. Please reload the page.';
+}
+</script>
+</body>
+</html>
